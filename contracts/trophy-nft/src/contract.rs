@@ -338,10 +338,7 @@ pub fn query_owner_of(
     })
 }
 
-pub fn query_nft_info(
-    deps: Deps,
-    token_id_str: String,
-) -> StdResult<NftInfoResponse<Option<Empty>>> {
+pub fn query_nft_info(deps: Deps, token_id_str: String) -> StdResult<NftInfoResponse> {
     let state = State::default();
     let token_id = TokenId::from_str(&token_id_str)?;
     let batch = state.batches.load(deps.storage, token_id.batch_id().into())?;
@@ -351,7 +348,6 @@ pub fn query_nft_info(
         name: format!("{} #{}", batch.name, token_id.serial()),
         description: batch.description,
         image: Some(batch.image),
-        extension: None,
     })
 }
 
@@ -360,7 +356,7 @@ pub fn query_all_nft_info(
     env: Env,
     token_id_str: String,
     include_expired: bool,
-) -> StdResult<AllNftInfoResponse<Option<Empty>>> {
+) -> StdResult<AllNftInfoResponse> {
     // This implementation is slightly less gas-efficient (as we run TokenId::from_str twice) but
     // the code is much cleaner, so I'm ok with it
     Ok(AllNftInfoResponse {
