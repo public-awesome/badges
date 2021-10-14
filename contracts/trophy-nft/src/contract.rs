@@ -57,6 +57,12 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             description,
             image,
         } => execute_create_batch(deps, env, info, name, description, image),
+        ExecuteMsg::EditBatch {
+            batch_id,
+            name,
+            description,
+            image,
+        } => execute_edit_batch(deps, env, info, batch_id, name, description, image),
         ExecuteMsg::Mint {
             batch_id,
             owners,
@@ -117,7 +123,41 @@ pub fn execute_create_batch(
     state.batches.save(deps.storage, batch_id.into(), &batch)?;
 
     Ok(Response::new()
-        .add_attribute("action", "batch_mint")
+        .add_attribute("action", "create_batch")
+        .add_attribute("minter", info.sender)
+        .add_attribute("batch_id", batch_id.to_string()))
+}
+
+pub fn execute_edit_batch(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    batch_id: u64,
+    name: Option<String>,
+    description: Option<String>,
+    image: Option<String>,
+) -> StdResult<Response> {
+    let state = State::default();
+
+    let minter = state.minter.load(deps.storage)?;
+    if info.sender != minter {
+        return Err(StdError::generic_err("caller is not minter"));
+    }
+
+    let mut batch = state.batches.load(deps.storage, batch_id.into())?;
+    if let Some(name) = name {
+        batch.name = name;
+    }
+    if let Some(description) = description {
+        batch.description = description;
+    }
+    if let Some(image) = image {
+        batch.image = image;
+    }
+    state.batches.save(deps.storage, batch_id.into(), &batch)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "edit_batch")
         .add_attribute("minter", info.sender)
         .add_attribute("batch_id", batch_id.to_string()))
 }
@@ -156,7 +196,7 @@ pub fn execute_mint(
     }
 
     Ok(Response::new()
-        .add_attribute("action", "batch_mint")
+        .add_attribute("action", "mint")
         .add_attribute("minter", info.sender)
         .add_attribute("batch_id", batch_id.to_string())
         .add_attribute("new_token_count", new_token_count.to_string()))
@@ -720,6 +760,52 @@ mod tests {
         // list the token ids
         let res = query_all_tokens(deps.as_ref(), None, None).unwrap();
         assert_eq!(res.tokens, vec!["1,1".to_string(), "1,2".to_string(), "1,3".to_string()]);
+    }
+
+    #[test]
+    fn editing_batch() {
+        let mut deps = mock_dependencies(&[]);
+        setup_test(deps.as_mut());
+
+        let msg = ExecuteMsg::CreateBatch {
+            name: "name".to_string(),
+            description: "description".to_string(),
+            image: "".to_string(),
+        };
+        let info = mock_info("minter", &[]);
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let msg = ExecuteMsg::Mint {
+            batch_id: 1,
+            owners: vec!["alice".to_string()],
+        };
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let msg = ExecuteMsg::EditBatch {
+            batch_id: 1,
+            name: None,
+            description: None,
+            image: Some("ipfs://123456789".to_string()),
+        };
+
+        // non-minter cannot edit
+        let info = mock_info("not-minter", &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg.clone());
+        assert_generic_error_message(res, "caller is not minter");
+
+        // minter can edit
+        let info = mock_info("minter", &[]);
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let res = query_nft_info(deps.as_ref(), "1,1".to_string()).unwrap();
+        assert_eq!(
+            res,
+            NftInfoResponse {
+                name: "name #1".to_string(),
+                description: "description".to_string(),
+                image: Some("ipfs://123456789".to_string()),
+            }
+        );
     }
 
     #[test]

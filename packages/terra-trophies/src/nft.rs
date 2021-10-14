@@ -51,6 +51,17 @@ pub enum ExecuteMsg {
         /// A URI pointing to an image representing the asset
         image: String,
     },
+    /// Edit info of a batch
+    EditBatch {
+        /// Identifier of the batch which NFTs is to be edited
+        batch_id: u64,
+        /// Name of the batch; None if not to change
+        name: Option<String>,
+        /// Description of the batch; None if not to change
+        description: Option<String>,
+        /// Image of the batch; None if not to change
+        image: Option<String>,
+    },
     /// Mint multiple NFTs within a batch
     Mint {
         /// Identifier of the batch of which NFTs are to be minted
