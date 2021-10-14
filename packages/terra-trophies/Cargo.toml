@@ -1,0 +1,14 @@
+[package]
+name = "terra-trophies"
+version = "0.1.0"
+authors = ["larry_0x <larry@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+cosmwasm-std = "0.16.0"
+cw721 = "0.9.1"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+cosmwasm-schema = "0.16.0"
