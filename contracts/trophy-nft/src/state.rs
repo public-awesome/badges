@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::string::ToString;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -57,9 +58,13 @@ impl Approval {
 /// Each NFT in a batch is identified by a serial number, which starts from 1 and goes up
 /// For example, the 420th NFT in the 69th batch is identified by tuple (64, 420)
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TokenId(pub u64, pub u64);
+pub struct TokenId(u64, u64);
 
 impl TokenId {
+    pub fn new(batch_id: u64, serial: u64) -> Self {
+        Self(batch_id, serial)
+    }
+
     pub fn batch_id(&self) -> u64 {
         self.0
     }
@@ -89,15 +94,9 @@ impl FromStr for TokenId {
     }
 }
 
-impl From<TokenId> for String {
-    fn from(token_id: TokenId) -> String {
-        format!("{},{}", token_id.0, token_id.1)
-    }
-}
-
-impl From<TokenId> for (U64Key, U64Key) {
-    fn from(token_id: TokenId) -> (U64Key, U64Key) {
-        (token_id.0.into(), token_id.1.into())
+impl ToString for TokenId {
+    fn to_string(&self) -> String {
+        format!("{},{}", self.0, self.1)
     }
 }
 
@@ -126,7 +125,7 @@ pub struct State<'a> {
     pub operators: Map<'a, (&'a Addr, &'a Addr), Expiration>,
     pub batches: Map<'a, U64Key, BatchInfo>,
     pub batch_count: Item<'a, u64>,
-    pub tokens: IndexedMap<'a, (U64Key, U64Key), TokenInfo, TokenIndexes<'a>>,
+    pub tokens: IndexedMap<'a, &'a str, TokenInfo, TokenIndexes<'a>>,
     pub token_count: Item<'a, u64>,
 }
 
@@ -154,12 +153,12 @@ impl<'a> Default for State<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::StdResult;
+    use terra_trophies::testing::assert_generic_error_message;
 
     #[test]
     fn token_id_from_str() {
         let token_id = TokenId::from_str("69,420").unwrap();
-        assert_eq!(token_id, TokenId(69, 420));
+        assert_eq!(token_id, TokenId::new(69, 420));
 
         let result = TokenId::from_str("69");
         assert_generic_error_message(result, "invalid token id: 69");
@@ -178,20 +177,9 @@ mod tests {
     }
 
     #[test]
-    fn token_id_into_string() {
-        let token_id = TokenId(69, 420);
-        let token_id_str: String = token_id.into();
+    fn token_id_to_string() {
+        let token_id = TokenId::new(69, 420);
+        let token_id_str: String = token_id.to_string();
         assert_eq!(token_id_str, "69,420".to_string());
-    }
-
-    pub fn assert_generic_error_message<T>(result: StdResult<T>, expected_msg: &str) {
-        match result {
-            Err(StdError::GenericErr {
-                msg,
-                ..
-            }) => assert_eq!(msg, expected_msg),
-            Err(other_err) => panic!("unexpected error: {:?}", other_err),
-            Ok(_) => panic!("expected error but ok"),
-        }
     }
 }

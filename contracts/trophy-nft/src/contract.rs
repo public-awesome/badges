@@ -16,7 +16,7 @@ use terra_trophies::nft::ExecuteMsg;
 
 use crate::state::{BatchInfo, State, TokenId, TokenInfo};
 
-use self::helpers::{try_transfer_nft, try_update_approvals};
+use self::helpers::{parse_approval, try_transfer_nft, try_update_approvals};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
@@ -118,12 +118,12 @@ pub fn execute_batch_mint(
     state.batches.save(deps.storage, batch_count.into(), &batch)?;
 
     for (idx, owner) in owners.iter().enumerate() {
-        let token_id = TokenId(batch_id, (idx + 1) as u64);
+        let token_id = TokenId::new(batch_id, (idx + 1) as u64);
         let token = TokenInfo {
             owner: deps.api.addr_validate(owner)?,
             approvals: vec![],
         };
-        state.tokens.save(deps.storage, token_id.into(), &token)?;
+        state.tokens.save(deps.storage, &token_id.to_string(), &token)?;
     }
 
     Ok(Response::new()
@@ -322,7 +322,7 @@ pub fn query_owner_of(
 ) -> StdResult<OwnerOfResponse> {
     let state = State::default();
     let token_id = TokenId::from_str(&token_id_str)?;
-    let info = state.tokens.load(deps.storage, token_id.into())?;
+    let info = state.tokens.load(deps.storage, &token_id.to_string())?;
 
     // remove expired approvals, then humanize
     let approvals = info
@@ -393,16 +393,6 @@ pub fn query_all_approvals(
     })
 }
 
-fn parse_approval(item: StdResult<Pair<Expiration>>) -> StdResult<cw721::Approval> {
-    item.and_then(|(k, expires)| {
-        let spender = String::from_utf8(k)?;
-        Ok(cw721::Approval {
-            spender,
-            expires,
-        })
-    })
-}
-
 pub fn query_tokens(
     deps: Deps,
     owner: String,
@@ -445,7 +435,7 @@ pub fn query_all_tokens(
         .tokens
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
-        .map(|item| item.map(|(k, _)| String::from_utf8_lossy(&k).to_string()))
+        .map(|item| item.map(|(k, _)| String::from_utf8(k).unwrap()))
         .collect();
 
     Ok(TokensResponse {
@@ -475,21 +465,21 @@ mod helpers {
     ) -> StdResult<TokenInfo> {
         let state = State::default();
         let token_id = TokenId::from_str(token_id_str)?;
-        let mut token = state.tokens.load(deps.storage, token_id.clone().into())?;
+        let mut token = state.tokens.load(deps.storage, &token_id.to_string())?;
 
         // ensure we have permissions
-        check_can_send(deps.as_ref(), env, info, &token)?;
+        _check_can_send(deps.as_ref(), env, info, &token)?;
 
         // set owner and remove existing approvals
         token.owner = deps.api.addr_validate(recipient)?;
         token.approvals = vec![];
-        state.tokens.save(deps.storage, token_id.into(), &token)?;
+        state.tokens.save(deps.storage, &token_id.to_string(), &token)?;
 
         Ok(token)
     }
 
     /// returns true if the sender can transfer ownership of the token
-    fn check_can_send(
+    fn _check_can_send(
         deps: Deps,
         env: &Env,
         info: &MessageInfo,
@@ -534,10 +524,10 @@ mod helpers {
     ) -> StdResult<()> {
         let state = State::default();
         let token_id = TokenId::from_str(token_id_str)?;
-        let mut token = state.tokens.load(deps.storage, token_id.clone().into())?;
+        let mut token = state.tokens.load(deps.storage, &token_id.to_string())?;
 
         // ensure we have permissions
-        check_can_approve(deps.as_ref(), env, info, &token)?;
+        _check_can_approve(deps.as_ref(), env, info, &token)?;
 
         // update the approval list, remove any approvals that are:
         // - for the same spender
@@ -564,12 +554,12 @@ mod helpers {
             token.approvals.push(approval);
         }
 
-        state.tokens.save(deps.storage, token_id.into(), &token)?;
+        state.tokens.save(deps.storage, &token_id.to_string(), &token)?;
         Ok(())
     }
 
     /// returns true if the sender can execute approve or reject on the contract
-    fn check_can_approve(
+    fn _check_can_approve(
         deps: Deps,
         env: &Env,
         info: &MessageInfo,
@@ -592,11 +582,163 @@ mod helpers {
 
         Err(StdError::generic_err("caller is not authorized to send"))
     }
+
+    pub fn parse_approval(item: StdResult<Pair<Expiration>>) -> StdResult<cw721::Approval> {
+        item.and_then(|(k, expires)| {
+            let spender = String::from_utf8(k)?;
+            Ok(cw721::Approval {
+                spender,
+                expires,
+            })
+        })
+    }
 }
 
 // TESTS
 
 #[cfg(test)]
 mod tests {
-    // WIP
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use terra_trophies::testing::assert_generic_error_message;
+
+    fn setup_test(deps: DepsMut) {
+        let msg = InstantiateMsg {
+            name: "Terra Trophies".to_string(),
+            symbol: "TT".to_string(),
+            minter: "minter".to_string(),
+        };
+        let info = mock_info("deployer", &[]);
+        let res = instantiate(deps, mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+    }
+
+    #[test]
+    fn proper_instantiation() {
+        let mut deps = mock_dependencies(&[]);
+        setup_test(deps.as_mut());
+
+        let res = query_contract_info(deps.as_ref()).unwrap();
+        assert_eq!(
+            res,
+            ContractInfoResponse {
+                name: "Terra Trophies".to_string(),
+                symbol: "TT".to_string()
+            }
+        );
+
+        let res = query_minter(deps.as_ref()).unwrap();
+        assert_eq!(res.minter, "minter".to_string());
+
+        let res = query_num_tokens(deps.as_ref()).unwrap();
+        assert_eq!(res.count, 0);
+
+        let res = query_all_tokens(deps.as_ref(), None, None).unwrap();
+        assert_eq!(res.tokens.len(), 0);
+    }
+
+    #[test]
+    fn creating_batch() {
+        let mut deps = mock_dependencies(&[]);
+        setup_test(deps.as_mut());
+
+        let msg = ExecuteMsg::CreateBatch {
+            name: "name".to_string(),
+            description: "description".to_string(),
+            image: "image".to_string(),
+            owners: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],
+        };
+
+        // non-minter cannot mint
+        let info = mock_info("not-minter", &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg.clone());
+        assert_generic_error_message(res, "caller is not minter");
+
+        // minter can mint
+        let info = mock_info("minter", &[]);
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        // ensure num tokens increases
+        let res = query_num_tokens(deps.as_ref()).unwrap();
+        assert_eq!(res.count, 3);
+
+        // ensure nft info is correct
+        let res = query_all_nft_info(deps.as_ref(), mock_env(), "1,2".to_string(), true).unwrap();
+        assert_eq!(
+            res,
+            AllNftInfoResponse {
+                access: OwnerOfResponse {
+                    owner: "bob".to_string(),
+                    approvals: vec![]
+                },
+                info: NftInfoResponse {
+                    name: "name #2".to_string(),
+                    description: "description".to_string(),
+                    image: Some("image".to_string()),
+                }
+            }
+        );
+
+        // list the token ids
+        let res = query_all_tokens(deps.as_ref(), None, None).unwrap();
+        assert_eq!(res.tokens, vec!["1,1".to_string(), "1,2".to_string(), "1,3".to_string()]);
+    }
+
+    #[test]
+    fn transferring_nft() {
+        let mut deps = mock_dependencies(&[]);
+        setup_test(deps.as_mut());
+
+        let msg = ExecuteMsg::CreateBatch {
+            name: "name".to_string(),
+            description: "description".to_string(),
+            image: "image".to_string(),
+            owners: vec!["alice".to_string()],
+        };
+        execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
+
+        let msg = ExecuteMsg::TransferNft {
+            token_id: "1,1".to_string(),
+            recipient: "bob".to_string(),
+        };
+
+        // charlie can't transfer
+        let info = mock_info("charlie", &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg.clone());
+        assert_generic_error_message(res, "caller is not authorized to send");
+
+        // alice can transfer
+        let info = mock_info("alice", &[]);
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let res = query_owner_of(deps.as_ref(), mock_env(), "1,1".to_string(), true).unwrap();
+        assert_eq!(res.owner, "bob".to_string());
+    }
+
+    #[test]
+    fn querying_nft_by_owner() {
+        let mut deps = mock_dependencies(&[]);
+        setup_test(deps.as_mut());
+
+        // create a first batch
+        let msg = ExecuteMsg::CreateBatch {
+            name: "batch-1".to_string(),
+            description: "desc-1".to_string(),
+            image: "image-1".to_string(),
+            owners: vec!["alice".to_string()],
+        };
+        execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
+
+        // create a second batch
+        let msg = ExecuteMsg::CreateBatch {
+            name: "batch-2".to_string(),
+            description: "description-2".to_string(),
+            image: "image-2".to_string(),
+            owners: vec!["bob".to_string(), "alice".to_string()],
+        };
+        execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
+
+        let res = query_tokens(deps.as_ref(), "alice".to_string(), None, None).unwrap();
+        assert_eq!(res.tokens, vec!["1,1".to_string(), "2,2".to_string()]);
+    }
 }
