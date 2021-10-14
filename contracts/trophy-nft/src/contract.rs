@@ -56,8 +56,11 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             name,
             description,
             image,
+        } => execute_create_batch(deps, env, info, name, description, image),
+        ExecuteMsg::Mint {
+            batch_id,
             owners,
-        } => execute_batch_mint(deps, env, info, name, description, image, owners),
+        } => execute_mint(deps, env, info, batch_id, owners),
         ExecuteMsg::TransferNft {
             recipient,
             token_id,
@@ -86,14 +89,13 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
     }
 }
 
-pub fn execute_batch_mint(
+pub fn execute_create_batch(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     name: String,
     description: String,
     image: String,
-    owners: Vec<String>,
 ) -> StdResult<Response> {
     let state = State::default();
 
@@ -105,20 +107,47 @@ pub fn execute_batch_mint(
     let batch_count = state.batch_count.load(deps.storage)? + 1;
     state.batch_count.save(deps.storage, &batch_count)?;
 
-    let new_token_count = owners.len() as u64;
-    let token_count = state.token_count.load(deps.storage)? + new_token_count;
-    state.token_count.save(deps.storage, &token_count)?;
-
     let batch_id = batch_count;
     let batch = BatchInfo {
         name,
         description,
         image,
+        token_count: 0,
     };
-    state.batches.save(deps.storage, batch_count.into(), &batch)?;
+    state.batches.save(deps.storage, batch_id.into(), &batch)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "batch_mint")
+        .add_attribute("minter", info.sender)
+        .add_attribute("batch_id", batch_id.to_string()))
+}
+
+pub fn execute_mint(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    batch_id: u64,
+    owners: Vec<String>,
+) -> StdResult<Response> {
+    let state = State::default();
+
+    let minter = state.minter.load(deps.storage)?;
+    if info.sender != minter {
+        return Err(StdError::generic_err("caller is not minter"));
+    }
+
+    let new_token_count = owners.len() as u64;
+    let token_count = state.token_count.load(deps.storage)? + new_token_count;
+    state.token_count.save(deps.storage, &token_count)?;
+
+    let mut batch = state.batches.load(deps.storage, batch_id.into())?;
+    let batch_token_count = batch.token_count;
+    batch.token_count += new_token_count;
+    state.batches.save(deps.storage, batch_id.into(), &batch)?;
 
     for (idx, owner) in owners.iter().enumerate() {
-        let token_id = TokenId::new(batch_id, (idx + 1) as u64);
+        let serial = batch_token_count + 1 + idx as u64;
+        let token_id = TokenId::new(batch_id, serial);
         let token = TokenInfo {
             owner: deps.api.addr_validate(owner)?,
             approvals: vec![],
@@ -638,24 +667,33 @@ mod tests {
     }
 
     #[test]
-    fn creating_batch() {
+    fn minting_nft() {
         let mut deps = mock_dependencies(&[]);
         setup_test(deps.as_mut());
+
+        // 1. CREATE BATCH
 
         let msg = ExecuteMsg::CreateBatch {
             name: "name".to_string(),
             description: "description".to_string(),
             image: "image".to_string(),
-            owners: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],
         };
 
-        // non-minter cannot mint
+        // non-minter cannot create batch
         let info = mock_info("not-minter", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg.clone());
         assert_generic_error_message(res, "caller is not minter");
 
-        // minter can mint
+        // minter can create batch
         let info = mock_info("minter", &[]);
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        // 2. MINT
+
+        let msg = ExecuteMsg::Mint {
+            batch_id: 1,
+            owners: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],
+        };
         execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // ensure num tokens increases
@@ -693,9 +731,15 @@ mod tests {
             name: "name".to_string(),
             description: "description".to_string(),
             image: "image".to_string(),
+        };
+        let info = mock_info("minter", &[]);
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let msg = ExecuteMsg::Mint {
+            batch_id: 1,
             owners: vec!["alice".to_string()],
         };
-        execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let msg = ExecuteMsg::TransferNft {
             token_id: "1,1".to_string(),
@@ -725,20 +769,39 @@ mod tests {
             name: "batch-1".to_string(),
             description: "desc-1".to_string(),
             image: "image-1".to_string(),
+        };
+        let info = mock_info("minter", &[]);
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        // mint first batch
+        let msg = ExecuteMsg::Mint {
+            batch_id: 1,
             owners: vec!["alice".to_string()],
         };
-        execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
         // create a second batch
         let msg = ExecuteMsg::CreateBatch {
             name: "batch-2".to_string(),
             description: "description-2".to_string(),
             image: "image-2".to_string(),
-            owners: vec!["bob".to_string(), "alice".to_string()],
         };
         execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
 
+        // mint second batch to 2 separate transactions
+        let msg = ExecuteMsg::Mint {
+            batch_id: 2,
+            owners: vec!["bob".to_string(), "charlie".to_string()],
+        };
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let msg = ExecuteMsg::Mint {
+            batch_id: 2,
+            owners: vec!["alice".to_string()],
+        };
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
         let res = query_tokens(deps.as_ref(), "alice".to_string(), None, None).unwrap();
-        assert_eq!(res.tokens, vec!["1,1".to_string(), "2,2".to_string()]);
+        assert_eq!(res.tokens, vec!["1,1".to_string(), "2,3".to_string()]);
     }
 }

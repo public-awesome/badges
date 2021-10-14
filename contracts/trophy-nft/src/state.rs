@@ -19,6 +19,10 @@ pub struct BatchInfo {
     /// Unlike the vanilla CW721 implementation, we require each batch must have an image. Seriously,
     /// why would you mint an NFT when you don't even have an image?
     pub image: String,
+    /// Number of tokens in this batch.
+    ///
+    /// NOTE: not the same as the global token count
+    pub token_count: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

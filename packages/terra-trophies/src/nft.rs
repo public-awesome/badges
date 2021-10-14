@@ -50,6 +50,11 @@ pub enum ExecuteMsg {
         description: String,
         /// A URI pointing to an image representing the asset
         image: String,
+    },
+    /// Mint multiple NFTs within a batch
+    Mint {
+        /// Identifier of the batch of which NFTs are to be minted
+        batch_id: u64,
         /// The owners of the newly minted NFTs
         owners: Vec<String>,
     },
