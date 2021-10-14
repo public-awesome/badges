@@ -1,10 +1,15 @@
-import { isTxError, Msg, Wallet, LCDClient, LocalTerra, Coin, Fee } from "@terra-money/terra.js";
+import { isTxError, Msg, Wallet, LCDClient, LocalTerra } from "@terra-money/terra.js";
 import axios from "axios";
 import chalk from "chalk";
-import { Network } from "./types";
 
 const LOCALTERRA_DEFAULT_GAS_PRICES =
   "0.01133uluna,0.15uusd,0.104938usdr,169.77ukrw,428.571umnt,0.125ueur,0.98ucny,16.37ujpy,0.11ugbp,10.88uinr,0.19ucad,0.14uchf,0.19uaud,0.2usgd,4.62uthb,1.25usek";
+
+export enum Network {
+  Mainnet,
+  Testnet,
+  LocalTerra,
+}
 
 export function getLcd(network: Network) {
   return network == Network.Mainnet
