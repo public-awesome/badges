@@ -7,6 +7,15 @@ use cw721::Expiration;
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
+    /// Mint multiple NFTs within a batch
+    Mint {
+        /// Identifier of the trophy of which instances are to be minted
+        trophy_id: u64,
+        /// The first serial number to be assigned in this mint
+        start_serial: u64,
+        /// The owners of the newly minted trophy instances
+        owners: Vec<String>,
+    },
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft {
         recipient: String,
@@ -40,33 +49,5 @@ pub enum ExecuteMsg {
     /// Remove previously granted ApproveAll permission
     RevokeAll {
         operator: String,
-    },
-
-    /// Create a batch of NFTs to a list of owners; can only be called by the contract minter
-    CreateBatch {
-        /// Identifies the asset to which this NFT represents
-        name: String,
-        /// Describes the asset to which this NFT represents (may be empty)
-        description: String,
-        /// A URI pointing to an image representing the asset
-        image: String,
-    },
-    /// Edit info of a batch
-    EditBatch {
-        /// Identifier of the batch which NFTs is to be edited
-        batch_id: u64,
-        /// Name of the batch; None if not to change
-        name: Option<String>,
-        /// Description of the batch; None if not to change
-        description: Option<String>,
-        /// Image of the batch; None if not to change
-        image: Option<String>,
-    },
-    /// Mint multiple NFTs within a batch
-    Mint {
-        /// Identifier of the batch of which NFTs are to be minted
-        batch_id: u64,
-        /// The owners of the newly minted NFTs
-        owners: Vec<String>,
     },
 }
