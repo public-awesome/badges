@@ -5,25 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, BlockInfo, StdError};
-use cw721::{Approval as Cw721Approval, ContractInfoResponse, Expiration};
-use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex, U64Key};
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct BatchInfo {
-    /// Identifies the asset to which this NFT represents
-    pub name: String,
-    /// Describes the asset to which this NFT represents
-    pub description: String,
-    /// URI pointing to a resource with mime type image/* representing the asset to which this NFT represents
-    ///
-    /// Unlike the vanilla CW721 implementation, we require each batch must have an image. Seriously,
-    /// why would you mint an NFT when you don't even have an image?
-    pub image: String,
-    /// Number of tokens in this batch.
-    ///
-    /// NOTE: not the same as the global token count
-    pub token_count: u64,
-}
+use cw721::{Approval as Cw721Approval, Expiration};
+use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TokenInfo {
@@ -54,22 +37,23 @@ impl Approval {
     }
 }
 
-/// Each NFT is represented by a 2-tuple: (batch_id: u64, serial: u64)
+/// Each NFT is represented by a 2-tuple: (trophy_id: u64, serial: u64)
 ///
-/// A batch is a collection of NFTs with the same name, description, and image; batch ID starts from
-/// 1 and goes up
+/// A **trophy** is a collection of NFTs with the same metadata; trophy ID starts from 1 and goes up.
 ///
-/// Each NFT in a batch is identified by a serial number, which starts from 1 and goes up
-/// For example, the 420th NFT in the 69th batch is identified by tuple (64, 420)
+/// Each NFT is an **instance** of a trophy, identified by a serial number, which starts from 1 and
+/// goes up.
+///
+/// For example, the 420th instance in the 69th trophy is identified by tuple (64, 420)
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TokenId(u64, u64);
 
 impl TokenId {
-    pub fn new(batch_id: u64, serial: u64) -> Self {
-        Self(batch_id, serial)
+    pub fn new(trophy_id: u64, serial: u64) -> Self {
+        Self(trophy_id, serial)
     }
 
-    pub fn batch_id(&self) -> u64 {
+    pub fn trophy_id(&self) -> u64 {
         self.0
     }
 
@@ -86,15 +70,15 @@ impl FromStr for TokenId {
             return Err(StdError::generic_err(format!("invalid token id: {}", s)));
         }
 
-        let batch_id_str = s_split[0];
-        let batch_id = u64::from_str(batch_id_str)
-            .map_err(|_| StdError::generic_err(format!("invalid batch id: {}", batch_id_str)))?;
+        let trophy_id_str = s_split[0];
+        let trophy_id = u64::from_str(trophy_id_str)
+            .map_err(|_| StdError::generic_err(format!("invalid batch id: {}", trophy_id_str)))?;
 
         let serial_str = s_split[1];
         let serial = u64::from_str(serial_str)
             .map_err(|_| StdError::generic_err(format!("invalid batch serial: {}", serial_str)))?;
 
-        Ok(TokenId(batch_id, serial))
+        Ok(TokenId(trophy_id, serial))
     }
 }
 
@@ -104,16 +88,15 @@ impl ToString for TokenId {
     }
 }
 
-//  We store token info in an indexed map indexed by two attributes:
-// - owner address
-// - batch id
+// We store token info in an indexed map indexed by owner address
 pub struct TokenIndexes<'a> {
     // pk goes to second tuple element
     pub owner: MultiIndex<'a, (Addr, Vec<u8>), TokenInfo>,
 }
 
 // From cw-storage-plus docs:
-//  Note: this code is more or less boiler-plate, and needed for the internals. Do not try to
+//
+// Note: this code is more or less boiler-plate, and needed for the internals. Do not try to
 // customize this; just return a list of all indexes.
 impl<'a> IndexList<TokenInfo> for TokenIndexes<'a> {
     fn get_indexes(&'_ self) -> Box<dyn Iterator<Item = &'_ dyn Index<TokenInfo>> + '_> {
@@ -124,11 +107,8 @@ impl<'a> IndexList<TokenInfo> for TokenIndexes<'a> {
 
 /// A wrapper struct for easy handling of contract state
 pub struct State<'a> {
-    pub contract_info: Item<'a, ContractInfoResponse>,
-    pub minter: Item<'a, Addr>,
+    pub hub: Item<'a, Addr>,
     pub operators: Map<'a, (&'a Addr, &'a Addr), Expiration>,
-    pub batches: Map<'a, U64Key, BatchInfo>,
-    pub batch_count: Item<'a, u64>,
     pub tokens: IndexedMap<'a, &'a str, TokenInfo, TokenIndexes<'a>>,
     pub token_count: Item<'a, u64>,
 }
@@ -143,11 +123,8 @@ impl<'a> Default for State<'a> {
             ),
         };
         Self {
-            contract_info: Item::new("contract_info"),
-            minter: Item::new("minter"),
+            hub: Item::new("hub"),
             operators: Map::new("operators"),
-            batches: Map::new("batches"),
-            batch_count: Item::new("batch_count"),
             tokens: IndexedMap::new("tokens", indexes),
             token_count: Item::new("token_count"),
         }
