@@ -1,4 +1,14 @@
-import { isTxError, Msg, Wallet, LCDClient, LocalTerra } from "@terra-money/terra.js";
+import * as fs from "fs";
+import * as path from "path";
+import {
+  LCDClient,
+  LocalTerra,
+  Wallet,
+  Msg,
+  MsgStoreCode,
+  MsgInstantiateContract,
+  isTxError,
+} from "@terra-money/terra.js";
 import axios from "axios";
 import chalk from "chalk";
 
@@ -11,20 +21,9 @@ export enum Network {
   LocalTerra,
 }
 
-export function getLcd(network: Network) {
-  return network == Network.Mainnet
-    ? new LCDClient({
-        chainID: "columbus-5",
-        URL: "https://lcd.terra.dev",
-      })
-    : network == Network.Testnet
-    ? new LCDClient({
-        chainID: "bombay-12",
-        URL: "https://bombay-lcd.terra.dev",
-      })
-    : new LocalTerra();
-}
-
+/**
+ * Fetch a network's minimum gas prices
+ */
 export async function getGasPrice(denom = "uusd", network = Network.Mainnet) {
   // for localterra, we use the default minumum gas price
   if (network == Network.LocalTerra) {
@@ -51,6 +50,44 @@ export async function getGasPrice(denom = "uusd", network = Network.Mainnet) {
   return parseFloat(response.data[denom]);
 }
 
+/**
+ * Return a list of delegators to a Terra validator specified by `valOperAddress`
+ */
+export async function fetchDelegators(valOperAddress: string) {
+  interface Delegator {
+    address: string;
+    amount: string;
+  }
+  interface DelegatorsResponse {
+    delegators: Delegator[];
+  }
+  const response: { data: DelegatorsResponse } = await axios.get(
+    `https://fcd.terra.dev/v1/staking/validators/${valOperAddress}/delegators?page=1&limit=5000`
+  );
+  const delegators = response.data.delegators.map((delegator) => delegator.address);
+  return delegators;
+}
+
+/**
+ * Return an `LCDClient` object based on selected network
+ */
+export function getLcd(network: Network) {
+  return network == Network.Mainnet
+    ? new LCDClient({
+        chainID: "columbus-5",
+        URL: "https://lcd.terra.dev",
+      })
+    : network == Network.Testnet
+    ? new LCDClient({
+        chainID: "bombay-12",
+        URL: "https://bombay-lcd.terra.dev",
+      })
+    : new LocalTerra();
+}
+
+/**
+ * Sign and broadcast a transaction; throws error if transaction fails
+ */
 export async function sendTransaction(terra: LCDClient, sender: Wallet, msgs: Msg[]) {
   const feeDenom = "uusd";
   const gasPrice = await getGasPrice(feeDenom);
@@ -71,4 +108,36 @@ export async function sendTransaction(terra: LCDClient, sender: Wallet, msgs: Ms
   }
 
   return result;
+}
+
+/**
+ * Update WASM code to the blockchain; returns code ID
+ */
+export async function storeCode(terra: LCDClient, deployer: Wallet, codePath: string) {
+  const fullCodePath = path.join(__dirname, codePath);
+  const code = fs.readFileSync(fullCodePath).toString("base64");
+  const msg = new MsgStoreCode(deployer.key.accAddress, code);
+  const result = await sendTransaction(terra, deployer, [msg]);
+  const codeId = parseInt(result.logs[0].eventsByType.store_code.code_id[0]);
+  return codeId;
+}
+
+/**
+ * Instantiate a contract; returns contract address
+ */
+export async function instantiateContract(
+  terra: LCDClient,
+  deployer: Wallet,
+  codeId: number,
+  instantiateMsg: object
+) {
+  const msg = new MsgInstantiateContract(
+    deployer.key.accAddress,
+    deployer.key.accAddress,
+    codeId,
+    instantiateMsg
+  );
+  const result = await sendTransaction(terra, deployer, [msg]);
+  const contractAddress = result.logs[0].eventsByType.instantiate_contract.contract_address[0];
+  return contractAddress;
 }
