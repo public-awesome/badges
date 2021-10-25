@@ -1,5 +1,4 @@
-import { LCDClient, Wallet, MnemonicKey, MsgExecuteContract } from "@terra-money/terra.js";
-import axios from "axios";
+import { Wallet, MnemonicKey, MsgExecuteContract } from "@terra-money/terra.js";
 import dotenv from "dotenv";
 import { Network, getLcd, sendTransaction, fetchDelegators } from "./helpers";
 import { Metadata } from "./metadata";
@@ -63,7 +62,7 @@ function createMintMessages(
   const mintMsgs = createMintMessages(minter, hubAddress, 1, owners);
   const msgs = [createMsg, ...mintMsgs];
   console.log("successfully created execute msgs!");
-  console.log(msgs);
+  // console.log(msgs);
 
   process.stdout.write("ready to execute; press any key to continue, CTRL+C to abort...");
   process.stdin.once("data", async function () {
