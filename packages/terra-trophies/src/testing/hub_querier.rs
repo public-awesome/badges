@@ -1,6 +1,6 @@
 use crate::hub::{QueryMsg, TrophyInfo};
+use crate::metadata::Metadata;
 use cosmwasm_std::{to_binary, Addr, QuerierResult, SystemError, SystemResult};
-use cw721_metadata_onchain::Metadata;
 use std::collections::HashMap;
 
 pub struct HubQuerier {

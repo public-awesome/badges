@@ -157,18 +157,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw2"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c6380164fb236412ff43c7ca075d95847c6fa8c51b2d3a513c23127a0f2a8f6"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "schemars",
- "serde",
-]
-
-[[package]]
 name = "cw721"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -178,36 +166,6 @@ dependencies = [
  "cw0",
  "schemars",
  "serde",
-]
-
-[[package]]
-name = "cw721-base"
-version = "0.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "239bdfcae1ba72cfcdd3e4eb6300eea2673b63f74425ece5b6bc45cf964fbc1a"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "cw0",
- "cw2",
- "cw721",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "cw721-metadata-onchain"
-version = "0.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4ee225b764dee5a9d7be17d3c964f2ce9ac96ed0af1bf5e3670eab5f061be5a"
-dependencies = [
- "cosmwasm-std",
- "cw721",
- "cw721-base",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -564,7 +522,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw721",
- "cw721-metadata-onchain",
  "schemars",
  "serde",
 ]
@@ -596,10 +553,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw0",
- "cw721",
- "cw721-base",
- "cw721-metadata-onchain",
  "schemars",
  "serde",
  "terra-trophies",
@@ -614,8 +567,6 @@ dependencies = [
  "cw-storage-plus",
  "cw0",
  "cw721",
- "cw721-base",
- "cw721-metadata-onchain",
  "schemars",
  "serde",
  "terra-trophies",

@@ -1,7 +1,8 @@
 use cosmwasm_std::{Addr, Api, StdResult};
-use cw721_metadata_onchain::Metadata;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::metadata::Metadata;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct TrophyInfo<T> {
@@ -74,9 +75,8 @@ pub struct ContractInfoResponse {
 }
 
 pub mod helpers {
-    use super::{QueryMsg, TrophyInfo};
+    use super::{Metadata, QueryMsg, TrophyInfo};
     use cosmwasm_std::{to_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
-    use cw721_metadata_onchain::Metadata;
 
     pub fn query_trophy_metadata(
         querier: &QuerierWrapper,

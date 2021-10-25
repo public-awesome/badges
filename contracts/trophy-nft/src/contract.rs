@@ -10,10 +10,10 @@ use cw721::{
     Cw721ReceiveMsg, Expiration, NftInfoResponse, NumTokensResponse, OwnerOfResponse,
     TokensResponse,
 };
-use cw721_metadata_onchain::Metadata;
 use cw_storage_plus::Bound;
 
 use terra_trophies::hub::helpers::query_trophy_metadata;
+use terra_trophies::metadata::Metadata;
 use terra_trophies::nft::ExecuteMsg;
 
 use crate::state::{State, TokenId, TokenInfo};

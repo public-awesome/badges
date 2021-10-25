@@ -2,9 +2,9 @@ use cosmwasm_std::{
     entry_point, to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
     Response, StdError, StdResult, SubMsg, SubMsgExecutionResponse, WasmMsg,
 };
-use cw721_metadata_onchain::Metadata;
 
 use terra_trophies::hub::{ContractInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, TrophyInfo};
+use terra_trophies::metadata::Metadata;
 use terra_trophies::nft::ExecuteMsg as NftExecuteMsg;
 
 use crate::state::State;
