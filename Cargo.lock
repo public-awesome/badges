@@ -599,6 +599,7 @@ dependencies = [
  "cw0",
  "cw721",
  "cw721-base",
+ "cw721-metadata-onchain",
  "schemars",
  "serde",
  "terra-trophies",

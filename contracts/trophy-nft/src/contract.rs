@@ -109,7 +109,7 @@ pub fn execute_mint(
         .add_attribute("action", "mint")
         .add_attribute("minter", info.sender)
         .add_attribute("trophy_id", trophy_id.to_string())
-        .add_attribute("start_serial:", start_serial.to_string())
+        .add_attribute("start_serial", start_serial.to_string())
         .add_attribute("new_token_count", new_token_count.to_string()))
 }
 
@@ -319,11 +319,7 @@ pub fn query_nft_info(deps: Deps, token_id_str: String) -> StdResult<NftInfoResp
 
     // If the trophy's name is `trophy_name`, and the token's serial number is 69, then the token's
     // full name is `trophy_name #69`
-    metadata.name = if let Some(name) = metadata.name {
-        Some(format!("{} #{}", name, token_id.serial()))
-    } else {
-        None
-    };
+    metadata.name = metadata.name.map(|name| format!("{} #{}", name, token_id.serial()));
 
     Ok(NftInfoResponse {
         token_uri: None,
@@ -588,7 +584,7 @@ mod tests {
         let mut deps = OwnedDeps {
             storage: MockStorage::default(),
             api: MockApi::default(),
-            querier: CustomQuerier::new(),
+            querier: CustomQuerier::default(),
         };
 
         // instantiate contract

@@ -9,6 +9,8 @@ pub struct TrophyInfo<T> {
     pub creator: T,
     /// The collection's metadata
     pub metadata: Metadata,
+    /// The number of tris trophy's instances
+    pub instance_count: u64,
 }
 
 impl From<TrophyInfo<Addr>> for TrophyInfo<String> {
@@ -16,6 +18,7 @@ impl From<TrophyInfo<Addr>> for TrophyInfo<String> {
         Self {
             creator: info.creator.to_string(),
             metadata: info.metadata,
+            instance_count: info.instance_count,
         }
     }
 }
@@ -25,6 +28,7 @@ impl TrophyInfo<String> {
         Ok(TrophyInfo {
             creator: api.addr_validate(&self.creator)?,
             metadata: self.metadata.clone(),
+            instance_count: self.instance_count,
         })
     }
 }
@@ -55,10 +59,18 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Query info about a trophy. Returns `TrophyInfo<String>`
+    /// Total number of existing trophies. Returns `ContractInfoResponse`
+    ContractInfo {},
+    /// Info about a trophy. Returns `TrophyInfo<String>`
     TrophyInfo {
         trophy_id: u64,
     },
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct ContractInfoResponse {
+    pub nft: String,
+    pub trophy_count: u64,
 }
 
 pub mod helpers {

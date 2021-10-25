@@ -28,14 +28,16 @@ impl Querier for CustomQuerier {
     }
 }
 
-impl CustomQuerier {
-    pub fn new() -> Self {
+impl Default for CustomQuerier {
+    fn default() -> Self {
         Self {
             base: MockQuerier::new(&[]),
             hub_querier: HubQuerier::default(),
         }
     }
+}
 
+impl CustomQuerier {
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match request {
             QueryRequest::Wasm(WasmQuery::Smart {

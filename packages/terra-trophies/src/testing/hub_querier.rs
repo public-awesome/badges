@@ -1,5 +1,5 @@
 use crate::hub::{QueryMsg, TrophyInfo};
-use cosmwasm_std::{to_binary, Addr, QuerierResult};
+use cosmwasm_std::{to_binary, Addr, QuerierResult, SystemError, SystemResult};
 use cw721_metadata_onchain::Metadata;
 use std::collections::HashMap;
 
@@ -23,6 +23,7 @@ impl Default for HubQuerier {
                 animation_url: Some("ipfs://hash-of-video-1".to_string()),
                 youtube_url: None,
             },
+            instance_count: 0,
         };
         let info_2 = TrophyInfo {
             creator: "creator_1".to_string(),
@@ -37,6 +38,7 @@ impl Default for HubQuerier {
                 animation_url: Some("ipfs://hash-of-video-2".to_string()),
                 youtube_url: None,
             },
+            instance_count: 0,
         };
 
         let mut trophy_infos: HashMap<u64, TrophyInfo<String>> = HashMap::new();
@@ -60,6 +62,9 @@ impl HubQuerier {
         }
 
         match msg {
+            QueryMsg::ContractInfo {} => SystemResult::Err(SystemError::UnsupportedRequest {
+                kind: "contract_info".to_string(),
+            }),
             QueryMsg::TrophyInfo {
                 trophy_id,
             } => Ok(to_binary(&self.query_trophy_info(trophy_id)).into()).into(),
