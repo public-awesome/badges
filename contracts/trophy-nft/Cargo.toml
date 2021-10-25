@@ -1,6 +1,6 @@
 [package]
 name = "trophy-nft"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["larry_0x <larry@protonmail.com>"]
 edition = "2018"
 
@@ -20,7 +20,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-terra-trophies = { version = "0.1.0", path = "../../packages/terra-trophies" }
+terra-trophies = { version = "0.2.0", path = "../../packages/terra-trophies" }
 
 cosmwasm-std = "=0.16.0"
 cw0 = "=0.9.1"
