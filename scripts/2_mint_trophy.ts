@@ -50,6 +50,9 @@ const argv = yargs(process.argv)
   const terra = getLcd(argv.network === "mainnet" ? Network.Mainnet : Network.Testnet);
 
   dotenv.config();
+  if (!process.env.MNEMONIC) {
+    throw new Error("mnemonic phrase not provided!");
+  }
   const minter = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
   console.log("minter address:", minter.key.accAddress);
 

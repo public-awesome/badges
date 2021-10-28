@@ -21,9 +21,15 @@ const argv = yargs(process.argv)
   .parseSync();
 
 (async function main() {
+  if (argv.network !== "mainnet" && argv.network !== "testnet") {
+    throw new Error("invalid network! must be `mainnet` or `testnet`");
+  }
+  const terra = getLcd(argv.network === "mainnet" ? Network.Mainnet : Network.Testnet);
+
   dotenv.config();
-  const network = Network.Testnet;
-  const terra = getLcd(network);
+  if (!process.env.MNEMONIC) {
+    throw new Error("mnemonic phrase not provided!");
+  }
   const deployer = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
   console.log("deployer address:", deployer.key.accAddress);
 
