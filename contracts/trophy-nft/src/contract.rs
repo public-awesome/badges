@@ -101,7 +101,7 @@ pub fn execute_mint(
         let traits = vec![
             Trait {
                 display_type: None,
-                trait_type: "trophy".to_string(),
+                trait_type: "trophy_id".to_string(),
                 value: trophy_id.to_string(),
             },
             Trait {
@@ -179,11 +179,11 @@ pub fn query_nft_info(deps: Deps, token_id: String) -> StdResult<NftInfoResponse
     let token = parent.tokens.load(deps.storage, &token_id)?;
 
     let traits = token.extension;
-    let trophy = traits
+    let trophy_id = traits
         .iter()
         .cloned()
-        .find(|t| t.trait_type == "trophy")
-        .ok_or_else(|| StdError::generic_err("cannot find `trophy` trait"))?
+        .find(|t| t.trait_type == "trophy_id")
+        .ok_or_else(|| StdError::generic_err("cannot find `trophy_id` trait"))?
         .value;
     let serial = traits
         .iter()
@@ -193,7 +193,7 @@ pub fn query_nft_info(deps: Deps, token_id: String) -> StdResult<NftInfoResponse
         .value;
 
     // retrieve metadata of the trophy from hub
-    let mut metadata = query_trophy_metadata(&deps.querier, &minter, trophy.parse().unwrap())?;
+    let mut metadata = query_trophy_metadata(&deps.querier, &minter, trophy_id.parse().unwrap())?;
 
     // if the trophy's name is `trophy_name`, and the token's serial number is 69, then the
     // token's full name is `trophy_name #69`
