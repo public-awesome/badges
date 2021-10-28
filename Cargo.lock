@@ -545,7 +545,7 @@ dependencies = [
 
 [[package]]
 name = "terra-trophies"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -576,7 +576,7 @@ dependencies = [
 
 [[package]]
 name = "trophy-hub"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -588,7 +588,7 @@ dependencies = [
 
 [[package]]
 name = "trophy-nft"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

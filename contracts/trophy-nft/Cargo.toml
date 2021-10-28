@@ -1,6 +1,6 @@
 [package]
 name = "trophy-nft"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["larry_0x <larry@protonmail.com>"]
 edition = "2018"
 
@@ -20,12 +20,12 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-terra-trophies = { version = "0.2.0", path = "../../packages/terra-trophies" }
+terra-trophies = { version = "0.3.0", path = "../../packages/terra-trophies" }
 
 cosmwasm-std = "=0.16.0"
 cw0 = "=0.9.1"
 cw721 = "=0.9.2"
-cw721-base = "=0.9.2"
+cw721-base = { version = "=0.9.2", features = ["library"] }  # must be imported as library!!!
 cw-storage-plus = "=0.9.1"
 
 schemars = "0.8.1"
