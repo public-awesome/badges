@@ -42,7 +42,7 @@ const argv = yargs(process.argv)
     if (argv["nft-code-id"]) {
       nftCodeId = argv["nft-code-id"];
     } else {
-      process.stdout.write("hub code id not provided! storing code... ");
+      process.stdout.write("nft code id not provided! storing code... ");
       nftCodeId = await storeCode(terra, deployer, "../artifacts/trophy_nft.wasm");
     }
     console.log("nft code id:", nftCodeId);
