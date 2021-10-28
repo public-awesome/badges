@@ -101,7 +101,7 @@ pub fn execute_mint(
         let traits = vec![
             Trait {
                 display_type: None,
-                trait_type: "trophy_id".to_string(),
+                trait_type: "trophy id".to_string(),
                 value: trophy_id.to_string(),
             },
             Trait {
@@ -182,7 +182,7 @@ pub fn query_nft_info(deps: Deps, token_id: String) -> StdResult<NftInfoResponse
     let trophy_id = traits
         .iter()
         .cloned()
-        .find(|t| t.trait_type == "trophy_id")
+        .find(|t| t.trait_type == "trophy id")
         .ok_or_else(|| StdError::generic_err("cannot find `trophy_id` trait"))?
         .value;
     let serial = traits
@@ -200,7 +200,11 @@ pub fn query_nft_info(deps: Deps, token_id: String) -> StdResult<NftInfoResponse
     metadata.name = metadata.name.map(|name| format!("{} #{}", name, serial));
 
     // insert trophy id and serial into metadata's traits
-    metadata.attributes = metadata.attributes.map(|attrs| [&traits[..], &attrs[..]].concat());
+    metadata.attributes = if let Some(attrs) = metadata.attributes {
+        Some([&traits[..], &attrs[..]].concat())
+    } else {
+        Some(traits)
+    };
 
     Ok(NftInfoResponse {
         token_uri: None,
@@ -310,7 +314,7 @@ mod tests {
         let res: NumTokensResponse = query_helper(deps.as_ref(), QueryMsg::NumTokens {});
         assert_eq!(res.count, 3);
 
-        // ensure nft info is correct
+        // make sure nft info is correct
         let res: AllNftInfoResponse<Metadata> = query_helper(
             deps.as_ref(),
             QueryMsg::AllNftInfo {
@@ -320,6 +324,21 @@ mod tests {
         );
         assert_eq!(res.access.owner, "bob".to_string());
         assert_eq!(res.info.extension.name.unwrap(), "Trophy Number One #2".to_string());
+
+        // make sure traits are correct
+        let traits = vec![
+            Trait {
+                display_type: None,
+                trait_type: "trophy id".to_string(),
+                value: "1".to_string(),
+            },
+            Trait {
+                display_type: None,
+                trait_type: "serial".to_string(),
+                value: "2".to_string(),
+            },
+        ];
+        assert_eq!(res.info.extension.attributes.unwrap(), traits);
 
         // list the token ids
         let res: TokensResponse = query_helper(
