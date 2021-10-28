@@ -1,4 +1,18 @@
+# cosmwasm compiled contract binaries
 artifacts
-node_modules
+
+# cargo files
 target
+
+# javascript dependencies
+node_modules
+
+# environment variables
 .env
+
+# macOS system files
+.DS_Store
+
+# private scripts that I don't want to commit are prefixed by an underscore
+**/_*.js
+**/_*.ts
