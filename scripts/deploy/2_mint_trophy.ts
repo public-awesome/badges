@@ -41,6 +41,10 @@ const argv = yargs(process.argv)
       type: "string",
       demandOption: true,
     },
+    "trophy-id": {
+      type: "number",
+      demandOption: true,
+    },
     metadata: {
       type: "string",
       demandOption: true,
@@ -74,7 +78,7 @@ const argv = yargs(process.argv)
   const createMsg = new MsgExecuteContract(minter.key.accAddress, argv["hub-address"], {
     create_trophy: metadata,
   });
-  const mintMsgs = createMintMessages(minter, argv["hub-address"], 2, owners);
+  const mintMsgs = createMintMessages(minter, argv["hub-address"], argv["trophy-id"], owners);
   const msgs = [createMsg, ...mintMsgs];
   console.log("successfully created execute msgs!");
 
