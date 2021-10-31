@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 import yargs from "yargs/yargs";
 import { MnemonicKey, MsgMigrateContract } from "@terra-money/terra.js";
 import { Network, getLcd, sendTransaction, storeCode } from "./helpers";
-import { number } from "yargs";
 
 const argv = yargs(process.argv)
   .options({

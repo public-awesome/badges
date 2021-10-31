@@ -1,8 +1,9 @@
+import * as fs from "fs";
 import dotenv from "dotenv";
 import yargs from "yargs/yargs";
 import { Wallet, MnemonicKey, MsgExecuteContract } from "@terra-money/terra.js";
-import { Network, getLcd, sendTransaction, fetchDelegators } from "./helpers";
-import { Metadata } from "./metadata";
+import { Network, getLcd, sendTransaction } from "./helpers";
+import { Metadata } from "./types";
 
 const MAX_OWNERS_PER_MSG = 50;
 
@@ -40,6 +41,14 @@ const argv = yargs(process.argv)
       type: "string",
       demandOption: true,
     },
+    metadata: {
+      type: "string",
+      demandOption: true,
+    },
+    owners: {
+      type: "string",
+      demandOption: true,
+    },
   })
   .parseSync();
 
@@ -56,40 +65,16 @@ const argv = yargs(process.argv)
   const minter = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
   console.log("minter address:", minter.key.accAddress);
 
-  const hubAddress = argv["hub-address"];
-  console.log("hub address:", hubAddress);
-
-  const metadata: Metadata = {
-    name: "Test",
-    description: "This is a test",
-    image: "ipfs://Qmbywr7uHvupdbD6h9tx6vPu3zWY4iskPjYBhSVNreKWFy",
-    animation_url: "ipfs://QmVovSXPF4WVKeJJZ4hQ5xxWME1EybVw216JZuXma6tWmF",
-  };
+  const metadata: Metadata = JSON.parse(fs.readFileSync(argv["metadata"], "utf8"));
   console.log("metadata:", metadata);
 
-  // option 1. drop NFT to all delegators of a validator. this was used in my "thank you" NFT drop
-  // const owners = await fetchDelegators("terravaloper1d3fv2cjukt0e6lrzd8d857jatlkht7wcp85zar");
-  // option 2. drop to 10 random addresses, for testing. these are the 10 test accounts in LocalTerra
-  const owners = [
-    "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v",
-    "terra17lmam6zguazs5q5u6z5mmx76uj63gldnse2pdp",
-    "terra1757tkx08n0cqrw7p86ny9lnxsqeth0wgp0em95",
-    "terra199vw7724lzkwz6lf2hsx04lrxfkz09tg8dlp6r",
-    "terra18wlvftxzj6zt0xugy2lr9nxzu402690ltaf4ss",
-    "terra1e8ryd9ezefuucd4mje33zdms9m2s90m57878v9",
-    "terra17tv2hvwpg0ukqgd2y5ct2w54fyan7z0zxrm2f9",
-    "terra1lkccuqgj6sjwjn8gsa9xlklqv4pmrqg9dx2fxc",
-    "terra1333veey879eeqcff8j3gfcgwt8cfrg9mq20v6f",
-    "terra1fmcjjt6yc9wqup2r06urnrd928jhrde6gcld6n",
-  ];
+  const owners: string[] = JSON.parse(fs.readFileSync(argv["owners"], "utf8"));
   console.log("number of eligible owners:", owners.length);
 
-  const createMsg = new MsgExecuteContract(minter.key.accAddress, hubAddress, {
-    create_trophy: {
-      ...metadata,
-    },
+  const createMsg = new MsgExecuteContract(minter.key.accAddress, argv["hub-address"], {
+    create_trophy: metadata,
   });
-  const mintMsgs = createMintMessages(minter, hubAddress, 1, owners);
+  const mintMsgs = createMintMessages(minter, argv["hub-address"], 2, owners);
   const msgs = [createMsg, ...mintMsgs];
   console.log("successfully created execute msgs!");
 

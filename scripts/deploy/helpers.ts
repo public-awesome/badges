@@ -51,24 +51,6 @@ export async function getGasPrice(denom = "uusd", network = Network.Mainnet) {
 }
 
 /**
- * Return a list of delegators to a Terra validator specified by `valOperAddress`
- */
-export async function fetchDelegators(valOperAddress: string) {
-  interface Delegator {
-    address: string;
-    amount: string;
-  }
-  interface DelegatorsResponse {
-    delegators: Delegator[];
-  }
-  const response: { data: DelegatorsResponse } = await axios.get(
-    `https://fcd.terra.dev/v1/staking/validators/${valOperAddress}/delegators?page=1&limit=5000`
-  );
-  const delegators = response.data.delegators.map((delegator) => delegator.address);
-  return delegators;
-}
-
-/**
  * Return an `LCDClient` object based on selected network
  */
 export function getLcd(network: Network) {
