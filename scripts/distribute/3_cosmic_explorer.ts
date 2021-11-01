@@ -5,9 +5,10 @@ import { decodeBase64 } from "./helpers";
 import { MsgExtended, IbcOutboundTransferData, ResultItem } from "./types";
 
 const START_TIME = 1634786670; // 2021-10-21 03:24:30 UTC, the time the 1st IBC-related tx was confirmed
-const DURATION = 3 * 24 * 60 * 60;
+const DURATION = 30 * 24 * 60 * 60;
 const END_TIME = START_TIME + DURATION;
-const SUPPLY = 500;
+// const SUPPLY = 500;
+const SUPPLY = 999999999;
 
 // if set DURATION = 7 days, there are 1748 eligible users
 // if set DURATION = 5 days, there are 1177 eligible users

@@ -1,6 +1,7 @@
-use crate::hub::{QueryMsg, TrophyInfo};
+use crate::hub::{MintRule, QueryMsg, TrophyInfo};
 use crate::metadata::Metadata;
 use cosmwasm_std::{to_binary, Addr, QuerierResult, SystemError, SystemResult};
+use cw721::Expiration;
 use std::collections::HashMap;
 
 pub struct HubQuerier {
@@ -10,40 +11,49 @@ pub struct HubQuerier {
 
 impl Default for HubQuerier {
     fn default() -> Self {
-        let info_1 = TrophyInfo {
-            creator: "creator_1".to_string(),
-            metadata: Metadata {
-                image: Some("ipfs://hash-to-image-1".to_string()),
-                image_data: None,
-                external_url: None,
-                description: Some("I am trophy number one".to_string()),
-                name: Some("Trophy Number One".to_string()),
-                attributes: None,
-                background_color: None,
-                animation_url: Some("ipfs://hash-of-video-1".to_string()),
-                youtube_url: None,
-            },
-            instance_count: 0,
-        };
-        let info_2 = TrophyInfo {
-            creator: "creator_1".to_string(),
-            metadata: Metadata {
-                image: Some("ipfs://hash-to-image-2".to_string()),
-                image_data: None,
-                external_url: None,
-                description: Some("I am trophy number two".to_string()),
-                name: Some("Trophy Number Two".to_string()),
-                attributes: None,
-                background_color: None,
-                animation_url: Some("ipfs://hash-of-video-2".to_string()),
-                youtube_url: None,
-            },
-            instance_count: 0,
-        };
-
         let mut trophy_infos: HashMap<u64, TrophyInfo<String>> = HashMap::new();
-        trophy_infos.insert(1, info_1);
-        trophy_infos.insert(2, info_2);
+
+        let metadata = Metadata {
+            image: Some("ipfs://hash-to-image-1".to_string()),
+            image_data: None,
+            external_url: None,
+            description: Some("I am trophy number one".to_string()),
+            name: Some("Trophy Number One".to_string()),
+            attributes: None,
+            background_color: None,
+            animation_url: Some("ipfs://hash-of-video-1".to_string()),
+            youtube_url: None,
+        };
+        let info = TrophyInfo {
+            creator: "creator".to_string(),
+            rule: MintRule::ByMinter("minter".to_string()),
+            metadata,
+            expiry: Some(Expiration::AtHeight(10000)),
+            max_supply: None,
+            current_supply: 0,
+        };
+        trophy_infos.insert(1, info);
+
+        let metadata = Metadata {
+            image: Some("ipfs://hash-to-image-2".to_string()),
+            image_data: None,
+            external_url: None,
+            description: Some("I am trophy number two".to_string()),
+            name: Some("Trophy Number Two".to_string()),
+            attributes: None,
+            background_color: None,
+            animation_url: Some("ipfs://hash-of-video-2".to_string()),
+            youtube_url: None,
+        };
+        let info = TrophyInfo {
+            creator: "creator".to_string(),
+            rule: MintRule::BySignature("signature".to_string()),
+            metadata,
+            expiry: None,
+            max_supply: Some(2),
+            current_supply: 0,
+        };
+        trophy_infos.insert(2, info);
 
         Self {
             hub_addr: Addr::unchecked("hub"),
