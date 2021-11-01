@@ -190,10 +190,11 @@ pub fn execute_mint_by_signature(
 }
 
 fn _verify_minter(caller: &Addr, minter: &Addr) -> StdResult<()> {
-    if caller != minter {
-        return Err(StdError::generic_err("caller is not minter"));
+    if caller == minter {
+        Ok(())
+    } else {
+        Err(StdError::generic_err("caller is not minter"))
     }
-    Ok(())
 }
 
 fn _verify_signature(
