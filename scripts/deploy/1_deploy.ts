@@ -1,7 +1,13 @@
-import dotenv from "dotenv";
+// This script instantiates Hub and NFT contracts on the specified network.
+//
+// If the contract codes have already been stored on the blockchain, use `--hub-code-id` and
+// `--nft-code-id` flags to specify them. If not, omit the flag and the script will upload the code.
+//
+// Usage:
+// ts-node 1_deply.ts --network {mainnet|testnet|localterra} [--hub-code-id int] [--nft-code-id int]
+
 import yargs from "yargs/yargs";
-import { MnemonicKey } from "@terra-money/terra.js";
-import { Network, getLcd, storeCode, instantiateContract } from "./helpers";
+import { getLcd, getWallet, storeCode, instantiateContract } from "./helpers";
 
 const argv = yargs(process.argv)
   .options({
@@ -21,16 +27,10 @@ const argv = yargs(process.argv)
   .parseSync();
 
 (async function main() {
-  if (argv.network !== "mainnet" && argv.network !== "testnet") {
-    throw new Error("invalid network! must be `mainnet` or `testnet`");
-  }
-  const terra = getLcd(argv.network === "mainnet" ? Network.Mainnet : Network.Testnet);
+  const terra = getLcd(argv.network);
+  console.log("created LCD client for", argv.network);
 
-  dotenv.config();
-  if (!process.env.MNEMONIC) {
-    throw new Error("mnemonic phrase not provided!");
-  }
-  const deployer = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
+  const deployer = getWallet(terra);
   console.log("deployer address:", deployer.key.accAddress);
 
   process.stdout.write("ready to execute; press any key to continue, CTRL+C to abort...");

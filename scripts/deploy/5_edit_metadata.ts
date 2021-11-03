@@ -26,13 +26,13 @@ const argv = yargs(process.argv)
   dotenv.config();
   const network = Network.Testnet;
   const terra = getLcd(network);
-  const minter = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
-  console.log("minter address:", minter.key.accAddress);
+  const creator = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
+  console.log("creator address:", creator.key.accAddress);
 
   const metadata: Metadata = JSON.parse(fs.readFileSync(argv["metadata"], "utf8"));
   console.log("metadata:", metadata);
 
-  const msg = new MsgExecuteContract(minter.key.accAddress, argv["hub-address"], {
+  const msg = new MsgExecuteContract(creator.key.accAddress, argv["hub-address"], {
     edit_trophy: {
       trophy_id: 1,
       metadata,
@@ -43,7 +43,7 @@ const argv = yargs(process.argv)
   process.stdout.write("ready to execute; press any key to continue, CTRL+C to abort...");
   process.stdin.once("data", async function () {
     process.stdout.write("editing trophy... ");
-    const { txhash } = await sendTransaction(terra, minter, [msg]);
+    const { txhash } = await sendTransaction(terra, creator, [msg]);
     console.log("success! txhash:", txhash);
     process.exit(0);
   });
