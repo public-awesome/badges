@@ -1,6 +1,10 @@
 // This scripts reads the transaction data produced by `8_fetch_ibc_msgs.ts` and compile a list of
 // the earliest adoptors of IBC on Terra. Used in the airdrop this trophy:
 // https://twitter.com/larry0x/status/1454645623123333121
+//
+// Usage:
+// mongod --dbpath <string>
+// ts-node 9_cosmic_explorer.ts
 
 import * as fs from "fs";
 import * as path from "path";

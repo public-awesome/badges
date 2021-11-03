@@ -1,7 +1,13 @@
-import dotenv from "dotenv";
+// This contract uploads latest binaries and migrates and contracts
+//
+// Usage:
+// ts-node 6_migrate_contracts --network {mainnet|testnet|localterra} \
+//   --hub-address <string> [--hub-code-id <int>] \
+//   --nft-address <string> [--nft-code-id <int>]
+
 import yargs from "yargs/yargs";
-import { MnemonicKey, MsgMigrateContract } from "@terra-money/terra.js";
-import { Network, getLcd, sendTransaction, storeCode } from "./helpers";
+import { MsgMigrateContract } from "@terra-money/terra.js";
+import { getLcd, getWallet, sendTransaction, storeCode } from "./helpers";
 
 const argv = yargs(process.argv)
   .options({
@@ -9,11 +15,19 @@ const argv = yargs(process.argv)
       type: "string",
       demandOption: true,
     },
+    "hub-address": {
+      type: "string",
+      demandOption: true,
+    },
     "nft-address": {
       type: "string",
       demandOption: true,
     },
-    "code-id": {
+    "hub-code-id": {
+      type: "number",
+      demandOption: false,
+    },
+    "nft-code-id": {
       type: "number",
       demandOption: false,
     },
@@ -21,37 +35,44 @@ const argv = yargs(process.argv)
   .parseSync();
 
 (async function main() {
-  if (argv.network !== "mainnet" && argv.network !== "testnet") {
-    throw new Error("invalid network! must be `mainnet` or `testnet`");
-  }
-  const terra = getLcd(argv.network === "mainnet" ? Network.Mainnet : Network.Testnet);
+  const terra = getLcd(argv.network);
+  console.log("created LCD client for", argv.network);
 
-  dotenv.config();
-  if (!process.env.MNEMONIC) {
-    throw new Error("mnemonic phrase not provided!");
-  }
-  const deployer = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
+  const deployer = getWallet(terra);
   console.log("deployer address:", deployer.key.accAddress);
-
-  const nftAddress = argv["nft-address"];
-  console.log("nft address:", nftAddress);
-
-  let codeId: number;
-  if (argv["code-id"]) {
-    codeId = argv["code-id"];
-  } else {
-    process.stdout.write("code id not provided! storing code... ");
-    codeId = await storeCode(terra, deployer, "../../artifacts/trophy_nft.wasm");
-  }
-  console.log("code id:", codeId);
 
   process.stdout.write("ready to execute; press any key to continue, CTRL+C to abort...");
   process.stdin.once("data", async function () {
-    process.stdout.write("migrating nft contract... ");
-    const { txhash } = await sendTransaction(terra, deployer, [
-      new MsgMigrateContract(deployer.key.accAddress, nftAddress, codeId, {}),
+    let hubCodeId: number;
+    if (argv["hub-code-id"]) {
+      hubCodeId = argv["hub-code-id"];
+    } else {
+      process.stdout.write("hub code id not provided! storing code... ");
+      hubCodeId = await storeCode(terra, deployer, "../artifacts/trophy_hub.wasm");
+    }
+    console.log("success! hub code id:", hubCodeId);
+
+    process.stdout.write("migrating hub contract... ");
+    const hubTxResult = await sendTransaction(terra, deployer, [
+      new MsgMigrateContract(deployer.key.accAddress, argv["hub-address"], hubCodeId, {}),
     ]);
-    console.log("success! txhash:", txhash);
+    console.log("success! txhash:", hubTxResult.txhash);
+
+    let nftCodeId: number;
+    if (argv["nft-code-id"]) {
+      nftCodeId = argv["nft-code-id"];
+    } else {
+      process.stdout.write("nft code id not provided! storing code... ");
+      nftCodeId = await storeCode(terra, deployer, "../artifacts/trophy_nft.wasm");
+    }
+    console.log("success! nft code id:", nftCodeId);
+
+    process.stdout.write("migrating nft contract... ");
+    const nftTxResult = await sendTransaction(terra, deployer, [
+      new MsgMigrateContract(deployer.key.accAddress, argv["nft-address"], nftCodeId, {}),
+    ]);
+    console.log("success! txhash:", nftTxResult.txhash);
+
     process.exit(0);
   });
 })();

@@ -70,7 +70,9 @@ const argv = yargs(process.argv)
         by_signature: bytesToBase64(pk),
       },
       metadata,
-      expiry: argv.expiry,
+      expiry: {
+        at_time: argv.expiry,
+      },
       max_supply: argv["max-supply"],
     },
   });
