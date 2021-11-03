@@ -50,7 +50,7 @@ const argv = yargs(process.argv)
       process.stdout.write("hub code id not provided! storing code... ");
       hubCodeId = await storeCode(terra, deployer, "../artifacts/trophy_hub.wasm");
     }
-    console.log("success! hub code id:", hubCodeId);
+    console.log("hub code id:", hubCodeId);
 
     process.stdout.write("migrating hub contract... ");
     const hubTxResult = await sendTransaction(terra, deployer, [
@@ -65,7 +65,7 @@ const argv = yargs(process.argv)
       process.stdout.write("nft code id not provided! storing code... ");
       nftCodeId = await storeCode(terra, deployer, "../artifacts/trophy_nft.wasm");
     }
-    console.log("success! nft code id:", nftCodeId);
+    console.log("nft code id:", nftCodeId);
 
     process.stdout.write("migrating nft contract... ");
     const nftTxResult = await sendTransaction(terra, deployer, [
