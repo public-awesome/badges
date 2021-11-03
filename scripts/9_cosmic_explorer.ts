@@ -1,18 +1,17 @@
+// This scripts reads the transaction data produced by `8_fetch_ibc_msgs.ts` and compile a list of
+// the earliest adoptors of IBC on Terra. Used in the airdrop this trophy:
+// https://twitter.com/larry0x/status/1454645623123333121
+
 import * as fs from "fs";
 import * as path from "path";
 import { MongoClient } from "mongodb";
 import { decodeBase64 } from "./helpers";
-import { MsgExtended, IbcOutboundTransferData, ResultItem } from "./types";
+import { MsgExtended, IbcOutboundTransferData, ResultItem } from "./message";
 
 const START_TIME = 1634786670; // 2021-10-21 03:24:30 UTC, the time the 1st IBC-related tx was confirmed
 const DURATION = 30 * 24 * 60 * 60;
 const END_TIME = START_TIME + DURATION;
-// const SUPPLY = 500;
-const SUPPLY = 999999999;
-
-// if set DURATION = 7 days, there are 1748 eligible users
-// if set DURATION = 5 days, there are 1177 eligible users
-// if set DURATION = 3 days, there are 748 eligible users
+const MAX_SUPPLY = 500;
 
 function criteria(msg: MsgExtended) {
   // tx must have happened within the 1st week IBC is activated
@@ -66,7 +65,7 @@ function criteria(msg: MsgExtended) {
 
       // stop if the total amount of airdrops hit supply cap
       // NOTE: this assumes tx in the db are ordered by time (earliest first)
-      if (result.length >= SUPPLY) break;
+      if (result.length >= MAX_SUPPLY) break;
     }
   }
 

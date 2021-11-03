@@ -13,7 +13,7 @@ import yargs from "yargs/yargs";
 import { MsgExecuteContract } from "@terra-money/terra.js";
 import { randomBytes } from "crypto";
 import { getLcd, getWallet, sendTransaction, bytesToBase64 } from "./helpers";
-import { Metadata } from "./types";
+import { Metadata } from "./metadata";
 
 function generatePrivateKey() {
   let sk: Uint8Array;

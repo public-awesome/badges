@@ -1,8 +1,15 @@
+// This scripts fetches all IBC-related transactions occurred between two block heights and store
+// them in a MongoDB collection.
+//
+// Usage:
+// mongod --dbpath <string>
+// ts-node 8_fetch_ibc_msgs.ts [--start-height <int>] [--end-height <int>]
+
 import axios from "axios";
 import yargs from "yargs/yargs";
 import { MongoClient } from "mongodb";
 import { sleep, dateStringToTimestamp, encodeBase64 } from "./helpers";
-import { Block, Msg, MsgExtended, Tx } from "./types";
+import { Block, Msg, MsgExtended, Tx } from "./message";
 
 const argv = yargs(process.argv)
   .options({
@@ -15,7 +22,7 @@ const argv = yargs(process.argv)
     "end-height": {
       alias: "e",
       type: "number",
-      demandOption: false,
+      demandOption: false, // default to the current height
     },
   })
   .parseSync();

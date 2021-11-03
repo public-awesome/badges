@@ -1,9 +1,17 @@
+// Edit metadata of a trophy. Metadata should be provided in the form of a JSON file.
+//
+// NOTE: Caller must be the creator of the trophy
+//
+// Usage:
+// ts-node 5_edit_metadata.ts --network {mainnet|testnet|localterra} --hub-address <string>
+//   --trophy-id <int> --metadata <string>
+
 import * as fs from "fs";
 import dotenv from "dotenv";
 import yargs from "yargs/yargs";
 import { MnemonicKey, MsgExecuteContract } from "@terra-money/terra.js";
-import { Network, getLcd, sendTransaction } from "./helpers";
-import { Metadata } from "./types";
+import { getLcd, sendTransaction } from "./helpers";
+import { Metadata } from "./metadata";
 
 const argv = yargs(process.argv)
   .options({
@@ -24,8 +32,7 @@ const argv = yargs(process.argv)
 
 (async function main() {
   dotenv.config();
-  const network = Network.Testnet;
-  const terra = getLcd(network);
+  const terra = getLcd(argv.network);
   const creator = terra.wallet(new MnemonicKey({ mnemonic: process.env.MNEMONIC }));
   console.log("creator address:", creator.key.accAddress);
 

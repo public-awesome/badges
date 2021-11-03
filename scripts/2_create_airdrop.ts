@@ -15,7 +15,7 @@ import * as fs from "fs";
 import yargs from "yargs/yargs";
 import { Wallet, MsgExecuteContract } from "@terra-money/terra.js";
 import { getLcd, getWallet, sendTransaction } from "./helpers";
-import { Metadata } from "./types";
+import { Metadata } from "./metadata";
 
 const MAX_OWNERS_PER_MSG = 50;
 

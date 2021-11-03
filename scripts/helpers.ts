@@ -153,6 +153,34 @@ export async function instantiateContract(
 }
 
 /**
+ * Sleep for a specified amount of time (in milliseconds)
+ */
+export function sleep(ms: number) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+/**
+ * Parse a date string to UNIX timestamp (in seconds)
+ */
+export function dateStringToTimestamp(dateStr: string) {
+  return Math.floor(Date.parse(dateStr) / 1000); // Date.parse returns milliseconds
+}
+
+/**
+ * Encodes an object to base64 string
+ */
+export function encodeBase64(obj: object) {
+  return Buffer.from(JSON.stringify(obj)).toString("base64");
+}
+
+/**
+ * Decodes a base54 string to object
+ */
+export function decodeBase64(base64: string) {
+  return JSON.parse(Buffer.from(base64, "base64").toString());
+}
+
+/**
  * Encodes a u8 array into base64 string
  */
 export function bytesToBase64(bytes: Uint8Array) {
