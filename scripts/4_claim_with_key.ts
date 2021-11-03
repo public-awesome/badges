@@ -50,7 +50,7 @@ const argv = yargs(process.argv)
 
   const executeMsg = new MsgExecuteContract(user.key.accAddress, argv["hub-address"], {
     mint_by_signature: {
-      trophy_id: 3,
+      trophy_id: argv["trophy-id"],
       signature: bytesToBase64(signature),
     },
   });
