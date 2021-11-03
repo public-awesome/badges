@@ -124,7 +124,7 @@ pub fn execute_mint(
         .add_attribute("minter", info.sender)
         .add_attribute("trophy_id", trophy_id.to_string())
         .add_attribute("start_serial", start_serial.to_string())
-        .add_attribute("new_token_count", owners.len().to_string()))
+        .add_attribute("amount_minted", owners.len().to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
