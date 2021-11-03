@@ -23,6 +23,10 @@ const argv = yargs(process.argv)
       type: "string",
       demandOption: true,
     },
+    "trophy-id": {
+      type: "number",
+      demandOption: true,
+    },
     metadata: {
       type: "string",
       demandOption: true,
@@ -37,11 +41,9 @@ const argv = yargs(process.argv)
   console.log("creator address:", creator.key.accAddress);
 
   const metadata: Metadata = JSON.parse(fs.readFileSync(argv["metadata"], "utf8"));
-  console.log("metadata:", metadata);
-
   const msg = new MsgExecuteContract(creator.key.accAddress, argv["hub-address"], {
     edit_trophy: {
-      trophy_id: 1,
+      trophy_id: argv["trophy-id"],
       metadata,
     },
   });
