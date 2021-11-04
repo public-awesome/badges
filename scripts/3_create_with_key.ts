@@ -3,6 +3,8 @@
 // The trophy's metadata should be specified in JSON files whose path is to supplied to the script
 // using `--metadata` flag.
 //
+// NOTE: expiry should be in nanoseconds
+//
 // Usage:
 // ts-node 3_create_with_key.ts --network {mainnet|testnet|localterra} --hub-address <string>
 //   --metadata <string> --expiry <int> --max-supply <int>
@@ -55,15 +57,12 @@ const argv = yargs(process.argv)
   const creator = getWallet(terra);
   console.log("creator address:", creator.key.accAddress);
 
-  const metadata: Metadata = JSON.parse(fs.readFileSync(argv["metadata"], "utf8"));
-  console.log("metadata:", metadata);
-
   // generate keys
-  process.stdout.write("generating keys... ");
   const sk = generatePrivateKey();
   const pk = secp256k1.publicKeyCreate(sk);
-  console.log("done!", { sk: bytesToBase64(sk), pk: bytesToBase64(pk) });
+  console.log("successfully generated keys:", { sk: bytesToBase64(sk), pk: bytesToBase64(pk) });
 
+  const metadata: Metadata = JSON.parse(fs.readFileSync(argv["metadata"], "utf8"));
   const msg = new MsgExecuteContract(creator.key.accAddress, argv["hub-address"], {
     create_trophy: {
       rule: {
@@ -74,7 +73,7 @@ const argv = yargs(process.argv)
       max_supply: argv["max-supply"],
     },
   });
-  console.log("successfully created execute msg!");
+  console.log("successfully created execute msg:", JSON.stringify(msg.execute_msg, null, 2));
 
   process.stdout.write("ready to execute; press any key to continue, CTRL+C to abort...");
   process.stdin.once("data", async function () {
