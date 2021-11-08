@@ -157,7 +157,7 @@ pub fn execute_mint_by_minter(
 
     match &trophy.rule {
         MintRule::ByMinter(minter) => {
-            _verify_minter(&info.sender, &minter)?;
+            _verify_minter(&info.sender, minter)?;
         }
         _ => {
             return Err(StdError::generic_err("minting rule is not `ByMinter`"));
@@ -197,12 +197,7 @@ fn _verify_minter(caller: &Addr, minter: &Addr) -> StdResult<()> {
     }
 }
 
-fn _verify_signature(
-    api: &dyn Api,
-    message: &String,
-    signature: &String,
-    pubkey: &String,
-) -> StdResult<()> {
+fn _verify_signature(api: &dyn Api, message: &str, signature: &str, pubkey: &str) -> StdResult<()> {
     let msg_bytes = Sha256::new().chain(message).finalize();
     let sig_bytes = base64::decode(signature)
         .map_err(|_| StdError::generic_err("[base64]: failed to decode signature"))?;
@@ -243,10 +238,8 @@ fn _mint(
     // each account can only receive the trophy once
     for owner in &owners {
         let owner_addr = deps.api.addr_validate(owner)?;
-        let claimed = state
-            .claimed
-            .load(deps.storage, (&owner_addr, trophy_id.into()))
-            .unwrap_or_else(|_| false);
+        let claimed =
+            state.claimed.load(deps.storage, (&owner_addr, trophy_id.into())).unwrap_or(false);
 
         if claimed {
             return Err(StdError::generic_err(format!("already minted: {}", owner)));
@@ -256,7 +249,7 @@ fn _mint(
     }
 
     trophy.current_supply += new_supply;
-    state.trophies.save(deps.storage, trophy_id.into(), &trophy)?;
+    state.trophies.save(deps.storage, trophy_id.into(), trophy)?;
 
     Ok(Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
