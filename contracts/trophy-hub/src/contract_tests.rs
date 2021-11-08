@@ -2,8 +2,8 @@ use cosmwasm_std::testing::{
     mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Api, ContractResult, CosmosMsg, Deps, Empty, Event, OwnedDeps,
-    Reply, SubMsg, SubMsgExecutionResponse, WasmMsg,
+    from_binary, to_binary, Api, ContractResult, CosmosMsg, Deps, Empty, Event, OwnedDeps, Reply,
+    SubMsg, SubMsgExecutionResponse, WasmMsg,
 };
 use cw721::Expiration;
 
@@ -17,13 +17,11 @@ use sha2::{Digest, Sha256};
 use terra_trophies::hub::{
     ContractInfoResponse, ExecuteMsg, InstantiateMsg, MintRule, QueryMsg, TrophyInfo,
 };
-use terra_trophies::legacy::LegacyTrophyInfo;
 use terra_trophies::metadata::Metadata;
 use terra_trophies::nft::ExecuteMsg as NftExecuteMsg;
 use terra_trophies::testing::assert_generic_error_message;
 
-use crate::contract::{execute, instantiate, migrate, query, reply};
-use crate::state::State;
+use crate::contract::{execute, instantiate, query, reply};
 
 // TESTS
 
@@ -169,6 +167,24 @@ fn minting_by_minter() {
         funds: vec![],
     });
     assert_eq!(res.messages[0].msg, expected);
+
+    // try mint a second time; should correctly `start_serial` as 3
+    let msg = ExecuteMsg::MintByMinter {
+        trophy_id: 1,
+        owners: vec!["charlie".to_string()],
+    };
+    let res = execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
+    let expected = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: "nft".to_string(),
+        msg: to_binary(&NftExecuteMsg::Mint {
+            trophy_id: 1,
+            start_serial: 3,
+            owners: vec!["charlie".to_string()],
+        })
+        .unwrap(),
+        funds: vec![],
+    });
+    assert_eq!(res.messages[0].msg, expected);
 }
 
 #[test]
@@ -181,15 +197,16 @@ fn minting_by_signature() {
     let pk1 = VerifyingKey::from(&sk1);
     let pk1_str = base64::encode(pk1.to_bytes());
 
-    // sign message, which is simply alice's address
-    let msg = "alice";
-    let msg_digest = Sha256::new().chain(msg);
-
-    // sig1 is signed by sk1, which is valid, can be used to claim trophy
-    // sig2 is signed by sk2, which is invalid
-    let sig1: EcdsaSignature = sk1.sign_digest(msg_digest.clone());
+    // alice properly signs a message using the the correct key (sk1)
+    let msg1 = "alice";
+    let msg1_digest = Sha256::new().chain(msg1);
+    let sig1: EcdsaSignature = sk1.sign_digest(msg1_digest.clone());
     let sig1_str = base64::encode(sig1.as_bytes());
-    let sig2: EcdsaSignature = sk2.sign_digest(msg_digest);
+
+    // bob signs the message using an incorrect key (sk2)
+    let msg2 = "bob";
+    let msg2_digest = Sha256::new().chain(msg2);
+    let sig2: EcdsaSignature = sk2.sign_digest(msg2_digest);
     let sig2_str = base64::encode(sig2.as_bytes());
 
     // instantaite contract
@@ -224,57 +241,22 @@ fn minting_by_signature() {
     assert_eq!(res.messages.len(), 1);
     assert_eq!(res.messages[0].msg, expected);
 
-    // bob attemps to mint using alice's signature; should fail
+    // alice attempts to mint the same trophy a seconds time; should fail
+    let err = execute(deps.as_mut(), mock_env(), mock_info("alice", &[]), msg.clone());
+    assert_generic_error_message(err, "already minted: alice");
+
+    // bob attempts to mint using alice's signature; should fail
     let err = execute(deps.as_mut(), mock_env(), mock_info("bob", &[]), msg);
     assert_generic_error_message(err, "signature verification failed");
 
-    // alice attempts to mint trophy using an invalid signature (signed by sk2 instead of sk1);
+    // bob attempts to mint trophy using an invalid signature (signed by sk2 instead of sk1);
     // should fail
     let msg = ExecuteMsg::MintBySignature {
         trophy_id: 1,
         signature: sig2_str,
     };
-    let err = execute(deps.as_mut(), mock_env(), mock_info("alice", &[]), msg);
+    let err = execute(deps.as_mut(), mock_env(), mock_info("bob", &[]), msg);
     assert_generic_error_message(err, "signature verification failed");
-}
-
-#[test]
-fn minting_multiple_times() {
-    let mut deps = setup_test();
-
-    // first, create the trophy
-    let msg = ExecuteMsg::CreateTrophy {
-        rule: MintRule::ByMinter("minter".to_string()),
-        metadata: mock_metadata(),
-        expiry: Some(Expiration::AtHeight(20000)),
-        max_supply: None,
-    };
-    execute(deps.as_mut(), mock_env(), mock_info("creator", &[]), msg).unwrap();
-
-    // mint for a first time
-    let msg = ExecuteMsg::MintByMinter {
-        trophy_id: 1,
-        owners: vec!["alice".to_string(), "bob".to_string()],
-    };
-    execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
-
-    // try mint a second time; should correctly `start_serial` as 3
-    let msg = ExecuteMsg::MintByMinter {
-        trophy_id: 1,
-        owners: vec!["charlie".to_string()],
-    };
-    let res = execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg).unwrap();
-    let expected = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: "nft".to_string(),
-        msg: to_binary(&NftExecuteMsg::Mint {
-            trophy_id: 1,
-            start_serial: 3,
-            owners: vec!["charlie".to_string()],
-        })
-        .unwrap(),
-        funds: vec![],
-    });
-    assert_eq!(res.messages[0].msg, expected);
 }
 
 #[test]
@@ -340,43 +322,6 @@ fn minting_assert_max_supply() {
     };
     let err = execute(deps.as_mut(), mock_env(), mock_info("minter", &[]), msg);
     assert_generic_error_message(err, "max supply exceeded");
-}
-
-#[test]
-fn migrating() {
-    let mut deps = setup_test();
-
-    let token_id = 1 as u64;
-    let state = State::default();
-
-    // create a trophy in legacy format
-    let trophy_legacy = LegacyTrophyInfo {
-        creator: Addr::unchecked("creator"),
-        metadata: mock_metadata(),
-        instance_count: 0,
-    };
-    state.trophies_legacy.save(deps.as_mut().storage, token_id.into(), &trophy_legacy).unwrap();
-    state.trophy_count.save(deps.as_mut().storage, &1).unwrap();
-
-    // migrate
-    migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
-
-    // trophy info should have been updated to the current format
-    let res: TrophyInfo<String> = query_helper(
-        deps.as_ref(),
-        QueryMsg::TrophyInfo {
-            trophy_id: 1,
-        },
-    );
-    let expected = TrophyInfo {
-        creator: "creator".to_string(),
-        rule: MintRule::ByMinter("creator".to_string()),
-        metadata: mock_metadata(),
-        expiry: None,
-        max_supply: None,
-        current_supply: 0,
-    };
-    assert_eq!(res, expected);
 }
 
 // HELPERS

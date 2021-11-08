@@ -228,6 +228,7 @@ fn _mint(
     let new_supply = owners.len() as u64;
     let start_serial = trophy.current_supply + 1;
 
+    // check minting time has not elapsed and max supply will not be exceeded after this mint
     if let Some(expiry) = trophy.expiry {
         if expiry.is_expired(&env.block) {
             return Err(StdError::generic_err("minting time has elapsed"));
@@ -236,6 +237,21 @@ fn _mint(
     if let Some(max_supply) = trophy.max_supply {
         if trophy.current_supply + new_supply > max_supply {
             return Err(StdError::generic_err("max supply exceeded"));
+        }
+    }
+
+    // each account can only receive the trophy once
+    for owner in &owners {
+        let owner_addr = deps.api.addr_validate(owner)?;
+        let claimed = state
+            .claimed
+            .load(deps.storage, (&owner_addr, trophy_id.into()))
+            .unwrap_or_else(|_| false);
+
+        if claimed {
+            return Err(StdError::generic_err(format!("already minted: {}", owner)));
+        } else {
+            state.claimed.save(deps.storage, (&owner_addr, trophy_id.into()), &true)?;
         }
     }
 
@@ -285,17 +301,6 @@ pub fn query_trophy_info(deps: Deps, trophy_id: u64) -> StdResult<TrophyInfo<Str
 // MIGRATE
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
-    let state = State::default();
-    let trophy_count = state.trophy_count.load(deps.storage)?;
-
-    // convert each of the trophy info from old format to new
-    for trophy_id in 1..(trophy_count + 1) {
-        let trophy_legacy = state.trophies_legacy.load(deps.storage, trophy_id.into())?;
-        let rule = MintRule::ByMinter(trophy_legacy.creator.clone());
-        let trophy = trophy_legacy.upgrade(rule, None, None);
-        state.trophies.save(deps.storage, trophy_id.into(), &trophy)?;
-    }
-
-    Ok(Response::default())
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
+    Ok(Response::default()) // do nothing
 }
