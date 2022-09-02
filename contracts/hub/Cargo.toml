@@ -1,0 +1,29 @@
+[package]
+name = "badge-hub"
+version = "1.0.0"
+authors = ["larry <gm@larry.engineer>"]
+edition = "2021"
+
+[features]
+library = []
+
+[dependencies]
+badges = { path = "../../packages/badges" }
+cosmwasm-std = "1.0"
+cw-storage-plus = "0.13"
+cw-utils = "0.13"
+cw2 = "0.13"
+hex = "0.4"
+schemars = "0.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+sg721 = "0.14"
+# TODO: update to once tagged and uploaded to crates.op
+sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
+sha2 = "0.10"
+thiserror = "1"
+
+[dev-dependencies]
+# can't use the latest v0.11; has version conflicts of the ecdsa package
+k256 = "0.10"
+prost = "0.9"
+rand = "0.8"

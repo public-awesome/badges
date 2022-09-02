@@ -1,0 +1,19 @@
+[package]
+name = "badges"
+version = "1.0.0"
+authors = ["larry <gm@larry.engineer>"]
+edition = "2021"
+description = "TODO"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/st4k3h0us3/badges"
+
+[dependencies]
+cosmwasm-std = "1.0"
+cw-utils = "0.13"
+schemars = "0.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+sg721 = "0.14"
+# the query msg is defined in sg721-base instead of sg721, for some reason
+sg721-base = { version = "0.13", features = ["library"] }
+# TODO: update to once tagged and uploaded to crates.op
+sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }

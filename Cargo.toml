@@ -1,9 +1,5 @@
 [workspace]
-members = ["packages/*", "contracts/*"]
-
-[profile.release.package.terra-trophies]
-codegen-units = 1
-incremental = false
+members = ["contracts/*", "packages/*"]
 
 [profile.release]
 rpath = false
