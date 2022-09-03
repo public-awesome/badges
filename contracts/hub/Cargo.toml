@@ -4,6 +4,9 @@ version = "1.0.0"
 authors = ["larry <gm@larry.engineer>"]
 edition = "2021"
 
+[lib]
+doctest = false
+
 [features]
 library = []
 

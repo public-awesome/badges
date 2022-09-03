@@ -7,6 +7,9 @@ description = "TODO"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/st4k3h0us3/badges"
 
+[lib]
+doctest = false
+
 [dependencies]
 cosmwasm-std = "1.0"
 cw-utils = "0.13"
