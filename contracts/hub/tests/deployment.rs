@@ -17,7 +17,7 @@ fn instantiating() {
         creator: "larry".to_string(),
         description: "this is a test".to_string(),
         image: "https://www.youtube.com/watch?v=dQw4w9WgXcQ".to_string(),
-        external_link: Some("https://larry.engineer".to_string()),
+        external_link: Some("https://larry.engineer/".to_string()),
         royalty_info: None,
     };
 

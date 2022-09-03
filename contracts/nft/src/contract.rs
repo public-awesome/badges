@@ -27,8 +27,12 @@ impl<'a> Deref for NftContract<'a> {
 
 impl<'a> NftContract<'a> {
     /// Overrides vanilla cw721's `nft_info` method
-    pub fn nft_info(&self, deps: Deps, token_id: String) -> StdResult<NftInfoResponse<Metadata>> {
-        let (id, serial) = parse_token_id(&token_id)?;
+    pub fn nft_info(
+        &self,
+        deps: Deps,
+        token_id: impl ToString,
+    ) -> StdResult<NftInfoResponse<Metadata>> {
+        let (id, serial) = parse_token_id(&token_id.to_string())?;
         let uri = uri(id, serial);
         let metadata = self.query_metadata(deps, id)?;
         Ok(NftInfoResponse {
@@ -42,13 +46,13 @@ impl<'a> NftContract<'a> {
         &self,
         deps: Deps,
         env: Env,
-        token_id: String,
+        token_id: impl ToString,
         include_expired: Option<bool>,
     ) -> StdResult<AllNftInfoResponse<Metadata>> {
         let access = self.parent.owner_of(
             deps,
             env,
-            token_id.clone(),
+            token_id.to_string(),
             include_expired.unwrap_or(false),
         )?;
         let info = self.nft_info(deps, token_id)?;
@@ -88,7 +92,7 @@ pub fn parse_token_id(token_id: &str) -> StdResult<(u64, u64)> {
     let split = token_id.split("|").collect::<Vec<&str>>();
     if split.len() != 2 {
         return Err(StdError::generic_err(
-            format!("invalid token id {}: must be in the format `serial|id`", token_id),
+            format!("invalid token id `{}`: must be in the format {{serial}}|{{id}}", token_id),
         ));
     }
 
