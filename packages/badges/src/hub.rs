@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use cw_utils::Expiration;
 use schemars::JsonSchema;
@@ -37,7 +37,9 @@ pub enum ExecuteMsg {
     /// Only callable by the manager before the minting deadline or max supply has been reached.
     AddKeys {
         id: u64,
-        keys: HashSet<String>,
+        /// NOTE: Use BTreeSet, because the order of items in a HashSet may not be deterministic.
+        /// See: https://www.reddit.com/r/rust/comments/krgvcu/is_the_iteration_order_of_hashset_deterministic/
+        keys: BTreeSet<String>,
     },
     /// Once a badge has expired or sold out, the whitelisted keys are no longer needed. Invoke this
     /// method to purge these keys from storage in order to reduce the chain's state size.
@@ -56,7 +58,8 @@ pub enum ExecuteMsg {
     /// minting rule is set to `ByOwner` and if caller is the owner
     MintByMinter {
         id: u64,
-        owners: HashSet<String>,
+        /// NOTE: User BTreeSet instead of HashSet, the same reason as discussed above
+        owners: BTreeSet<String>,
     },
     /// Mint a new instance of the trophy by submitting a signature. The message should be the
     /// caller's address, and the private key is the one created for this trophy. Called only if the

@@ -101,7 +101,7 @@ fn minting_by_minter() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
-            utils::hashset(&["jake"]),
+            utils::btreeset(&["jake"]),
             Addr::unchecked("larry"),
         )
         .unwrap_err();
@@ -114,7 +114,7 @@ fn minting_by_minter() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
-            utils::hashset(&["jake"]),
+            utils::btreeset(&["jake"]),
             Addr::unchecked("jake"),
         )
         .unwrap_err();
@@ -127,7 +127,7 @@ fn minting_by_minter() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
-            utils::hashset(&["jake", "pumpkin", "doge"]),
+            utils::btreeset(&["jake", "pumpkin", "doge"]),
             Addr::unchecked("larry"),
         )
         .unwrap_err();
@@ -140,7 +140,7 @@ fn minting_by_minter() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             1,
-            utils::hashset(&["jake", "pumpkin"]),
+            utils::btreeset(&["jake", "pumpkin"]),
             Addr::unchecked("larry"),
         )
         .unwrap_err();
@@ -174,7 +174,7 @@ fn minting_by_minter() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
-            utils::hashset(&["jake", "pumpkin"]),
+            utils::btreeset(&["jake", "pumpkin"]),
             Addr::unchecked("larry"),
         )
         .unwrap();

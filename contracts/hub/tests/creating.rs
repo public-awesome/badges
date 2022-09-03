@@ -178,7 +178,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("jake", &[]),
             1,
-            utils::hashset(&["1234abcd"]),
+            utils::btreeset(&["1234abcd"]),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::NotManager);
@@ -191,7 +191,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
             2,
-            utils::hashset(&["1234abcd"]),
+            utils::btreeset(&["1234abcd"]),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::wrong_mint_rule("by_keys", &badge.rule));
@@ -204,7 +204,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(99999),
             mock_info("larry", &[]),
             1,
-            utils::hashset(&["1234abcd"]),
+            utils::btreeset(&["1234abcd"]),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::Expired);
@@ -217,7 +217,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
             1,
-            utils::hashset(&["ngmi"]),
+            utils::btreeset(&["ngmi"]),
         )
         .unwrap_err();
         assert_eq!(
@@ -236,7 +236,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
             1,
-            utils::hashset(&["1234abcd", "4321dcba"]),
+            utils::btreeset(&["1234abcd", "4321dcba"]),
         )
         .unwrap();
         assert_eq!(res.messages, vec![]);

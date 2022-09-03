@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt;
 
 use cosmwasm_std::{
@@ -131,7 +131,7 @@ pub fn add_keys(
     env: Env,
     info: MessageInfo,
     id: u64,
-    keys: HashSet<String>,
+    keys: BTreeSet<String>,
 ) -> Result<Response, ContractError> {
     let badge = BADGES.load(deps.storage, id)?;
 
@@ -227,7 +227,7 @@ pub fn mint_by_minter(
     deps: DepsMut,
     env: Env,
     id: u64,
-    owners: HashSet<String>,
+    owners: BTreeSet<String>,
     sender: Addr,
 ) -> Result<Response, ContractError> {
     let nft_addr = NFT.load(deps.storage)?;

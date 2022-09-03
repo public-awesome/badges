@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{Env, Timestamp};
@@ -27,8 +27,8 @@ pub fn sign(privkey: &SigningKey, msg: &str) -> String {
     hex::encode(sig_bytes)
 }
 
-/// Cast a slice of strings into a hashset
-pub fn hashset(slice: &[&str]) -> HashSet<String> {
+/// Cast a slice of strings into a btreeset
+pub fn btreeset(slice: &[&str]) -> BTreeSet<String> {
     slice.iter().map(|s| s.to_string()).collect()
 }
 
