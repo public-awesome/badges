@@ -26,19 +26,18 @@ pub const MAX_LIMIT: u32 = 30;
 pub fn init(
     deps: DepsMut,
     env: Env,
-    owner: Addr,
+    info: MessageInfo,
     nft_code_id: u64,
     nft_info: CollectionInfo<RoyaltyInfoResponse>,
 ) -> StdResult<Response> {
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    OWNER.save(deps.storage, &owner)?;
     BADGE_COUNT.save(deps.storage, &0)?;
 
     Ok(Response::new()
         .add_submessage(SubMsg::reply_on_success(
             WasmMsg::Instantiate {
-                admin: Some(owner.to_string()),
+                admin: Some(info.sender.to_string()),
                 code_id: nft_code_id,
                 msg: to_binary(&sg721::InstantiateMsg {
                     name: "Badges".to_string(),
@@ -73,22 +72,14 @@ pub fn init_hook(deps: DepsMut, reply: Reply) -> Result<Response, ContractError>
 
 pub fn create_badge(
     deps: DepsMut,
-    info: MessageInfo,
     manager: String,
     metadata: Metadata,
     rule: MintRule,
     expiry: Option<Expiration>,
     max_supply: Option<u64>,
 ) -> Result<Response, ContractError> {
-    // TODO: For now we make it such that only the owner can create new collections. Consider making
-    // this permissionless in the future. The concern here is it may be possible to spam attack the
-    // chain as Stargaze has zero-gas fee.
-    let owner = OWNER.load(deps.storage)?;
-    if info.sender != owner {
-        return Err(ContractError::NotOwner);
-    }
-
     let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
+
     let badge = Badge {
         id,
         manager: deps.api.addr_validate(&manager)?,
@@ -356,7 +347,6 @@ pub fn mint_by_keys(
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse {
-        owner: OWNER.load(deps.storage)?.to_string(),
         nft: NFT.load(deps.storage)?.to_string(),
         badge_count: BADGE_COUNT.load(deps.storage)?,
     })

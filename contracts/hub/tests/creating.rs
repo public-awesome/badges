@@ -13,7 +13,6 @@ mod utils;
 fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     let mut deps = mock_dependencies();
 
-    OWNER.save(deps.as_mut().storage, &Addr::unchecked("larry")).unwrap();
     NFT.save(deps.as_mut().storage, &Addr::unchecked("nft")).unwrap();
     BADGE_COUNT.save(deps.as_mut().storage, &0).unwrap();
 
@@ -38,7 +37,6 @@ fn mock_badge() -> Badge<Addr> {
 fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
     contract::create_badge(
         deps,
-        mock_info("larry", &[]),
         badge.manager.to_string(),
         badge.metadata.clone(),
         badge.rule.clone(),
@@ -51,23 +49,6 @@ fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
 #[test]
 fn creating_badge() {
     let mut deps = setup_test();
-
-    // non-owner cannot create badge
-    {
-        let badge = mock_badge();
-
-        let err = contract::create_badge(
-            deps.as_mut(),
-            mock_info("jake", &[]),
-            badge.manager.to_string(),
-            badge.metadata.clone(),
-            badge.rule.clone(),
-            badge.expiry,
-            badge.max_supply,
-        )
-        .unwrap_err();
-        assert_eq!(err, ContractError::NotOwner);
-    }
 
     // create the first badge
     {

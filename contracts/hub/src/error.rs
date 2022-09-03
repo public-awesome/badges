@@ -23,9 +23,6 @@ pub enum ContractError {
     #[error("signature verification failed")]
     InvalidSignature,
 
-    #[error("unauthorized: sender is not contract owner")]
-    NotOwner,
-
     #[error("unauthorized: sender is not badge manager")]
     NotManager,
 

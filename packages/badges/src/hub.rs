@@ -115,8 +115,6 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct ConfigResponse {
-    /// Owner of this contract
-    pub owner: String,
     /// Address of the Badge NFT contract
     pub nft: String,
     /// The total number of badges

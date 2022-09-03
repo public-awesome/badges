@@ -1,7 +1,9 @@
 use cosmwasm_std::testing::{mock_dependencies, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{attr, to_binary, Addr, Empty, OwnedDeps, StdResult, SubMsg, Timestamp, WasmMsg, Storage};
+use cosmwasm_std::{
+    attr, to_binary, Addr, Empty, OwnedDeps, StdResult, Storage, SubMsg, Timestamp, WasmMsg,
+};
 use cw_utils::Expiration;
-use k256::ecdsa::{VerifyingKey, SigningKey};
+use k256::ecdsa::{SigningKey, VerifyingKey};
 use sg721::MintMsg;
 use sg_metadata::Metadata;
 

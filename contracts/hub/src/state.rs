@@ -3,9 +3,6 @@ use cw_storage_plus::{Item, Map};
 
 use badges::Badge;
 
-/// Owner of this contract
-pub const OWNER: Item<Addr> = Item::new("owner");
-
 /// Address of badge nft contract
 pub const NFT: Item<Addr> = Item::new("nft");
 

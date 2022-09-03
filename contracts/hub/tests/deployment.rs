@@ -1,4 +1,4 @@
-use cosmwasm_std::testing::{mock_dependencies, mock_env, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
     attr, to_binary, Addr, Empty, Reply, SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
 };
@@ -7,7 +7,7 @@ use sg721::CollectionInfo;
 
 use badge_hub::contract;
 use badge_hub::error::ContractError;
-use badge_hub::state::{BADGE_COUNT, NFT, OWNER};
+use badge_hub::state::{BADGE_COUNT, NFT};
 
 #[test]
 fn instantiating() {
@@ -24,7 +24,7 @@ fn instantiating() {
     let res = contract::init(
         deps.as_mut(),
         mock_env(),
-        Addr::unchecked("larry"),
+        mock_info("larry", &[]),
         168,
         collection_info.clone(),
     )
@@ -56,9 +56,6 @@ fn instantiating() {
             attr("contract_version", env!("CARGO_PKG_VERSION"))
         ]
     );
-
-    let owner_addr = OWNER.load(deps.as_ref().storage).unwrap();
-    assert_eq!(owner_addr, Addr::unchecked("larry"));
 
     let badge_count = BADGE_COUNT.load(deps.as_ref().storage).unwrap();
     assert_eq!(badge_count, 0);

@@ -21,7 +21,7 @@ pub mod entry {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> StdResult<Response> {
-        contract::init(deps, env, info.sender, msg.nft_code_id, msg.nft_info)
+        contract::init(deps, env, info, msg.nft_code_id, msg.nft_info)
     }
 
     #[entry_point]
@@ -46,7 +46,7 @@ pub mod entry {
                 rule,
                 expiry,
                 max_supply,
-            } => contract::create_badge(deps, info, manager, metadata, rule, expiry, max_supply),
+            } => contract::create_badge(deps,  manager, metadata, rule, expiry, max_supply),
             ExecuteMsg::EditBadge {
                 id,
                 metadata,
