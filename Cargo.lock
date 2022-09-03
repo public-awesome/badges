@@ -33,16 +33,12 @@ version = "1.0.0"
 dependencies = [
  "badges",
  "cosmwasm-std",
- "cw-storage-plus",
  "cw2",
  "cw721",
- "schemars",
- "serde",
  "sg-metadata",
  "sg-std",
  "sg721",
  "sg721-base",
- "thiserror",
 ]
 
 [[package]]

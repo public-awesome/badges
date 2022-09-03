@@ -1,8 +1,14 @@
 [package]
-name = "badge-hub"
-version = "1.0.0"
-authors = ["larry <gm@larry.engineer>"]
-edition = "2021"
+name        = "badge-hub"
+version     = "1.0.0"
+authors     = ["larry <gm@larry.engineer>"]
+edition     = "2021"
+description = "Badge Hub contract is where event organizers create, mint, or edit badges."
+readme      = "README.md"
+homepage    = "https://larry.engineer"
+repository  = "https://github.com/st4k3h0us3/badges"
+license     = "GPL-3.0-or-later"
+keywords    = ["nft", "cosmos", "cosmwasm", "stargaze"]
 
 [lib]
 doctest = false
@@ -18,7 +24,7 @@ cw-utils = "0.13"
 cw2 = "0.13"
 hex = "0.4"
 sg721 = "0.14"
-# TODO: update to once tagged and uploaded to crates.op
+# TODO: update once published on crates.io
 sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
 sha2 = "0.10"
 thiserror = "1"

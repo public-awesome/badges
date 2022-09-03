@@ -1,8 +1,14 @@
 [package]
-name = "badge-nft"
-version = "1.0.0"
-authors = ["larry <gm@larry.engineer>"]
-edition = "2021"
+name        = "badge-nft"
+version     = "1.0.0"
+authors     = ["larry <gm@larry.engineer>"]
+edition     = "2021"
+description = "Badge NFT is the implementation of SG-721 contract for the Badges project"
+readme      = "README.md"
+homepage    = "https://larry.engineer"
+repository  = "https://github.com/st4k3h0us3/badges"
+license     = "GPL-3.0-or-later"
+keywords    = ["nft", "cosmos", "cosmwasm", "stargaze"]
 
 [lib]
 doctest = false
@@ -15,13 +21,9 @@ badges = { path = "../../packages/badges" }
 cosmwasm-std = "1.0"
 cw2 = "0.13"
 cw721 = "0.13"
-cw-storage-plus = "0.13"
-schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = "0.14"
-# TODO: update to once tagged and uploaded to crates.op
+# TODO: update once published on crates.io
 sg721-base = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
-# TODO: update to once tagged and uploaded to crates.op
+# TODO: update once published on crates.io
 sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
 sg-std = "0.14"
-thiserror = "1"

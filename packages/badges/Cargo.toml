@@ -1,11 +1,14 @@
 [package]
-name = "badges"
-version = "1.0.0"
-authors = ["larry <gm@larry.engineer>"]
-edition = "2021"
-description = "TODO"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/st4k3h0us3/badges"
+name        = "badges"
+version     = "1.0.0"
+authors     = ["larry <gm@larry.engineer>"]
+edition     = "2021"
+description = "Badges allows anyone to create digital badges people who participant in events or achieve certain accomplishments"
+readme      = "README.md"
+homepage    = "https://larry.engineer"
+repository  = "https://github.com/st4k3h0us3/badges"
+license     = "GPL-3.0-or-later"
+keywords    = ["nft", "cosmos", "cosmwasm", "stargaze"]
 
 [lib]
 doctest = false
@@ -16,5 +19,5 @@ cw-utils = "0.13"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = "0.14"
-# TODO: update to once tagged and uploaded to crates.op
+# TODO: update once published on crates.io
 sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
