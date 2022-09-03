@@ -174,10 +174,11 @@ fn minting_by_minter() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
-            utils::btreeset(&["jake", "pumpkin"]),
+            utils::btreeset(&["pumpkin", "jake"]),
             Addr::unchecked("larry"),
         )
         .unwrap();
+        // NOTE: with btreemap, the elements are sorted alphabetically
         assert_eq!(res.messages, expected_msgs(&["jake", "pumpkin"]));
         assert_eq!(
             res.attributes,
