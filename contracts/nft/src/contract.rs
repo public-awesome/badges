@@ -89,7 +89,7 @@ pub fn uri(id: u64, serial: u64) -> String {
 /// Split a token id into badge id and serial number.
 /// The token id must be in the format `{u64}|{u64}`, where the 1st number is id and 2nd is serial.
 pub fn parse_token_id(token_id: &str) -> StdResult<(u64, u64)> {
-    let split = token_id.split("|").collect::<Vec<&str>>();
+    let split = token_id.split('|').collect::<Vec<&str>>();
     if split.len() != 2 {
         return Err(StdError::generic_err(
             format!("invalid token id `{}`: must be in the format {{serial}}|{{id}}", token_id),
