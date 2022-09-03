@@ -1,17 +1,35 @@
 use cosmwasm_std::testing::{mock_dependencies, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{attr, to_binary, Addr, Empty, OwnedDeps, SubMsg, Timestamp, WasmMsg};
+use cosmwasm_std::{attr, to_binary, Addr, Empty, OwnedDeps, StdResult, SubMsg, Timestamp, WasmMsg, Storage};
 use cw_utils::Expiration;
-use k256::ecdsa::{VerifyingKey};
+use k256::ecdsa::{VerifyingKey, SigningKey};
 use sg721::MintMsg;
 use sg_metadata::Metadata;
 
 use badge_hub::contract;
 use badge_hub::error::ContractError;
-use badge_hub::helpers::{token_id, token_uri};
+use badge_hub::helpers::{message, token_id};
 use badge_hub::state::*;
 use badges::{Badge, MintRule};
 
 mod utils;
+
+/// Return the mock privkey, its corresponding pubkey, and the pubkey in hex encoding
+fn mock_keys() -> (SigningKey, VerifyingKey, String) {
+    let privkey = utils::mock_privkey();
+    let pubkey = VerifyingKey::from(&privkey);
+    let pubkey_str = hex::encode(pubkey.to_bytes());
+    (privkey, pubkey, pubkey_str)
+}
+
+fn set_badge_supply(store: &mut dyn Storage, id: u64, current_supply: u64) {
+    BADGES
+        .update(store, id, |badge| {
+            let mut badge = badge.unwrap();
+            badge.current_supply = current_supply;
+            StdResult::Ok(badge)
+        })
+        .unwrap();
+}
 
 fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     let mut deps = mock_dependencies();
@@ -25,12 +43,10 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
         rule: MintRule::ByKeys,
         expiry: Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
         max_supply: Some(100),
-        current_supply: 99,
+        current_supply: 98,
     };
 
-    let privkey = utils::mock_privkey();
-    let pubkey = VerifyingKey::from(&privkey);
-    let pubkey_str = hex::encode(pubkey.to_bytes());
+    let (_, _, pubkey_str) = mock_keys();
 
     BADGES
         .save(
@@ -39,7 +55,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
             &Badge {
                 id: 1,
                 rule: MintRule::ByMinter("larry".to_string()),
-                current_supply: 98,
                 ..default_badge.clone()
             },
         )
@@ -51,7 +66,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
             2,
             &Badge {
                 id: 2,
-                rule: MintRule::ByKey(pubkey_str),
+                rule: MintRule::ByKey(pubkey_str.clone()),
                 ..default_badge.clone()
             },
         )
@@ -69,7 +84,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
         )
         .unwrap();
 
-    KEYS.save(deps.as_mut().storage, (3, utils::MOCK_PRIVKEY), &Empty {}).unwrap();
+    KEYS.save(deps.as_mut().storage, (3, &pubkey_str), &Empty {}).unwrap();
 
     deps
 }
@@ -77,6 +92,19 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
 #[test]
 fn minting_by_minter() {
     let mut deps = setup_test();
+
+    // wrong mint type
+    {
+        let err = contract::mint_by_minter(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            utils::hashset(&["jake"]),
+            Addr::unchecked("larry"),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::wrong_mint_rule("by_minter", &MintRule::ByKeys));
+    }
 
     // non-minter cannot mint
     {
@@ -130,7 +158,7 @@ fn minting_by_minter() {
                         msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
                             token_id: token_id(1, serial),
                             owner: owner.to_string(),
-                            token_uri: Some(token_uri(1, serial)),
+                            token_uri: None,
                             extension: None,
                         }))
                         .unwrap(),
@@ -164,50 +192,306 @@ fn minting_by_minter() {
 fn minting_by_key() {
     let mut deps = setup_test();
 
+    let privkey = utils::mock_privkey();
+    let msg = message(2, "larry");
+    let signature = utils::sign(&privkey, &msg);
+
+    // wrong mint rule
+    {
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            "larry".to_string(),
+            signature.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::wrong_mint_rule("by_key", &MintRule::ByKeys));
+    }
+
     // attempt to mint with correct privkey but false message
-    {}
+    {
+        let false_msg = message(2, "jake");
+        let signature = utils::sign(&privkey, &false_msg);
+
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            2,
+            "larry".to_string(),
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::InvalidSignature);
+    }
 
     // attempt to mint with false key wtith correct message
-    {}
+    {
+        let false_privkey = utils::random_privkey();
+        let signature = utils::sign(&false_privkey, &msg);
 
-    // attempt to mint after expiry
-    {}
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            2,
+            "larry".to_string(),
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::InvalidSignature);
+    }
 
     // properly mint
-    {}
+    {
+        let res = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            2,
+            "larry".to_string(),
+            signature.clone(),
+        )
+        .unwrap();
+        assert_eq!(
+            res.messages,
+            vec![SubMsg::new(WasmMsg::Execute {
+                contract_addr: "nft".to_string(),
+                msg: to_binary(&sg721::ExecuteMsg::Mint(sg721::MintMsg::<Option<Empty>> {
+                    token_id: "2|99".to_string(),
+                    owner: "larry".to_string(),
+                    token_uri: None,
+                    extension: None,
+                }))
+                .unwrap(),
+                funds: vec![],
+            })],
+        );
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "badges/hub/mint_by_key"),
+                attr("id", "2"),
+                attr("serial", "99"),
+                attr("recipient", "larry"),
+            ],
+        );
+
+        // current supply should have been updated
+        let badge = BADGES.load(deps.as_ref().storage, 2).unwrap();
+        assert_eq!(badge.current_supply, 99);
+
+        // larry should be marked as already received
+        let claimed = contract::query_owner(deps.as_ref(), 2, "larry").unwrap();
+        assert!(claimed);
+    }
 
     // attempt to mint to the same user
-    {}
+    {
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            2,
+            "larry".to_string(),
+            signature.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::already_claimed(2, "larry"));
+    }
 
     // attempt to mint after expiry
-    {}
+    {
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(99999),
+            2,
+            "larry".to_string(),
+            signature.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::Expired);
+    }
 
     // attempt to mint after max supply is reached
-    {}
+    {
+        set_badge_supply(deps.as_mut().storage, 2, 100);
+
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            2,
+            "larry".to_string(),
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::SoldOut);
+    }
 }
 
 #[test]
 fn minting_by_keys() {
     let mut deps = setup_test();
 
+    let (privkey, _, pubkey_str) = mock_keys();
+    let msg = message(3, "larry");
+    let signature = utils::sign(&privkey, &msg);
+
+    // wrong mint rule
+    {
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            1,
+            "larry".to_string(),
+            signature.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(
+            err,
+            ContractError::wrong_mint_rule("by_key", &MintRule::by_minter("larry")),
+        );
+    }
+
     // attempt to mint with a whitelisted privkey but with wrong message
-    {}
+    {
+        let false_msg = message(3, "jake");
+        let signature = utils::sign(&privkey, &false_msg);
+
+        let err = contract::mint_by_keys(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            "larry".to_string(),
+            pubkey_str.clone(),
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::InvalidSignature);
+    }
 
     // attempt to mint with the correct message but a non-whitelisted privkey
-    {}
+    {
+        let false_privkey = utils::random_privkey();
+        let false_pubkey = VerifyingKey::from(&false_privkey);
+        let false_pubkey_str = hex::encode(false_pubkey.to_bytes());
+        let signature = utils::sign(&false_privkey, &msg);
+
+        let err = contract::mint_by_keys(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            "larry".to_string(),
+            false_pubkey_str,
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::key_does_not_exist(3));
+    }
 
     // properly mint
-    {}
+    {
+        let res = contract::mint_by_keys(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            "larry".to_string(),
+            pubkey_str.clone(),
+            signature.clone(),
+        )
+        .unwrap();
+        assert_eq!(
+            res.messages,
+            vec![SubMsg::new(WasmMsg::Execute {
+                contract_addr: "nft".to_string(),
+                msg: to_binary(&sg721::ExecuteMsg::Mint(sg721::MintMsg::<Option<Empty>> {
+                    token_id: "3|99".to_string(),
+                    owner: "larry".to_string(),
+                    token_uri: None,
+                    extension: None,
+                }))
+                .unwrap(),
+                funds: vec![],
+            })],
+        );
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "badges/hub/mint_by_keys"),
+                attr("id", "3"),
+                attr("serial", "99"),
+                attr("recipient", "larry"),
+            ],
+        );
+
+        // current supply should have been updated
+        let badge = BADGES.load(deps.as_ref().storage, 3).unwrap();
+        assert_eq!(badge.current_supply, 99);
+
+        // larry should be marked as already received
+        let claimed = contract::query_owner(deps.as_ref(), 3, "larry").unwrap();
+        assert!(claimed);
+
+        // the pubkey should be removed from the whitelist
+        let whitelisted = contract::query_key(deps.as_ref(), 3, &pubkey_str).unwrap();
+        assert!(!whitelisted);
+    }
 
     // attempt to mint to using the same privkey again
-    {}
+    {
+        let msg = message(3, "jake");
+        let signature = utils::sign(&privkey, &msg);
+
+        let err = contract::mint_by_keys(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            "jake".to_string(),
+            pubkey_str.clone(),
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::key_does_not_exist(3));
+    }
 
     // attempt to mint to the same user again
-    {}
+    {
+        KEYS.save(deps.as_mut().storage, (3, "larry"), &Empty {}).unwrap();
+
+        let err = contract::mint_by_keys(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+        "larry".to_string(),
+            pubkey_str,
+            signature.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::already_claimed(3, "larry"));
+    }
 
     // attempt to mint after expiry
-    {}
+    {
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(99999),
+            3,
+            "larry".to_string(),
+            signature.clone(),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::Expired);
+    }
 
     // attempt to mint after max supply is reached
-    {}
+    {
+        set_badge_supply(deps.as_mut().storage, 3, 100);
+
+        let err = contract::mint_by_key(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            3,
+            "larry".to_string(),
+            signature,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::SoldOut);
+    }
 }

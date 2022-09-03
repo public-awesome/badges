@@ -261,7 +261,7 @@ pub fn mint_by_minter(
                 msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
                     token_id: token_id(id, serial),
                     owner,
-                    token_uri: Some(token_uri(id, serial)),
+                    token_uri: None,
                     extension: None,
                 }))?,
                 funds: vec![],
@@ -300,8 +300,12 @@ pub fn mint_by_key(
             contract_addr: nft_addr.to_string(),
             msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
                 token_id: token_id(id, badge.current_supply),
+                // NOTE: it's possible to avoid cloning and save a liiiittle bit of gas here, simply
+                // by moving this `add_message` after the one `add_attribute` that uses `owner`.
+                // however this makes the code uglier so i don't want to do it.
+                // Stargaze has free gas price anyways (for now at least)
                 owner: owner.clone(),
-                token_uri: Some(token_uri(id, badge.current_supply)),
+                token_uri: None,
                 extension: None,
             }))?,
             funds: vec![],
@@ -339,7 +343,7 @@ pub fn mint_by_keys(
             msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
                 token_id: token_id(id, badge.current_supply),
                 owner: owner.clone(),
-                token_uri: Some(token_uri(id, badge.current_supply)),
+                token_uri: None,
                 extension: None,
             }))?,
             funds: vec![],
@@ -381,8 +385,8 @@ pub fn query_badges(
         .collect()
 }
 
-pub fn query_key(deps: Deps, id: u64, pubkey: String) -> StdResult<bool> {
-    let res = KEYS.may_load(deps.storage, (id, &pubkey))?;
+pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> StdResult<bool> {
+    let res = KEYS.may_load(deps.storage, (id, &pubkey.into()))?;
     Ok(res.is_some())
 }
 
@@ -402,8 +406,10 @@ pub fn query_keys(
         .collect()
 }
 
-pub fn query_owner(deps: Deps, id: u64, user: String) -> StdResult<bool> {
-    let res = OWNERS.may_load(deps.storage, (id, &user))?;
+/// This function takes `impl Into<String>` instead of `String` so that i can type a few characters
+/// less in the unit tests =)
+pub fn query_owner(deps: Deps, id: u64, user: impl Into<String>) -> StdResult<bool> {
+    let res = OWNERS.may_load(deps.storage, (id, &user.into()))?;
     Ok(res.is_some())
 }
 

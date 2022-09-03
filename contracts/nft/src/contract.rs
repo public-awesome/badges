@@ -26,18 +26,18 @@ impl<'a> Deref for NftContract<'a> {
 }
 
 impl<'a> NftContract<'a> {
+    /// Overrides vanilla cw721's `nft_info` method
     pub fn nft_info(&self, deps: Deps, token_id: String) -> StdResult<NftInfoResponse<Metadata>> {
-        let info = self.parent.tokens.load(deps.storage, &token_id)?;
-
         let (id, serial) = parse_token_id(&token_id)?;
+        let uri = uri(id, serial);
         let metadata = self.query_metadata(deps, id)?;
-
         Ok(NftInfoResponse {
-            token_uri: info.token_uri,
+            token_uri: Some(uri),
             extension: prepend_traits(metadata, id, serial),
         })
     }
 
+    /// Overrides vanilla cw721's `all_nft_info` method
     pub fn all_nft_info(
         &self,
         deps: Deps,
@@ -45,25 +45,16 @@ impl<'a> NftContract<'a> {
         token_id: String,
         include_expired: Option<bool>,
     ) -> StdResult<AllNftInfoResponse<Metadata>> {
-        let AllNftInfoResponse {
-            access,
-            info,
-        } = self.parent.all_nft_info(
+        let access = self.parent.owner_of(
             deps,
             env,
             token_id.clone(),
             include_expired.unwrap_or(false),
         )?;
-
-        let (id, serial) = parse_token_id(&token_id)?;
-        let metadata = self.query_metadata(deps, id)?;
-
+        let info = self.nft_info(deps, token_id)?;
         Ok(AllNftInfoResponse {
             access,
-            info: NftInfoResponse {
-                token_uri: info.token_uri,
-                extension: prepend_traits(metadata, id, serial),
-            },
+            info,
         })
     }
 
@@ -82,6 +73,17 @@ impl<'a> NftContract<'a> {
     }
 }
 
+/// URL of an API serving the metadata of the NFT.
+///
+/// A benefit of dynamically generating the URL instead of saving it in the contract storage is that
+/// if I later want to update the URL, I only need to change this one function, instead of changing
+/// every token's data.
+pub fn uri(id: u64, serial: u64) -> String {
+    format!("https://badges-api.larry.engineer/metadata?id={}&serial={}", id, serial)
+}
+
+/// Split a token id into badge id and serial number.
+/// The token id must be in the format `{u64}|{u64}`, where the 1st number is id and 2nd is serial.
 pub fn parse_token_id(token_id: &str) -> StdResult<(u64, u64)> {
     let split = token_id.split("|").collect::<Vec<&str>>();
     if split.len() != 2 {
@@ -98,6 +100,7 @@ pub fn parse_token_id(token_id: &str) -> StdResult<(u64, u64)> {
     Ok((id, serial))
 }
 
+/// The badge's id and serial are prepended to it's list of traits.
 pub fn prepend_traits(mut metadata: Metadata, id: u64, serial: u64) -> Metadata {
     let mut traits = vec![
         Trait {

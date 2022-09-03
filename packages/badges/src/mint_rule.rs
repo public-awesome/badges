@@ -38,3 +38,13 @@ impl fmt::Display for MintRule {
         write!(f, "{}", s)
     }
 }
+
+impl MintRule {
+    pub fn by_minter(minter: impl Into<String>) -> Self {
+        MintRule::ByMinter(minter.into())
+    }
+
+    pub fn by_key(key: impl Into<String>) -> Self {
+        MintRule::ByKey(key.into())
+    }
+}

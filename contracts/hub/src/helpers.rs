@@ -13,11 +13,6 @@ pub fn token_id(id: u64, serial: u64) -> String {
     format!("{}|{}", id, serial)
 }
 
-/// URL of an API serving the metadata of the NFT.
-pub fn token_uri(id: u64, serial: u64) -> String {
-    format!("https://api.larry.engineer/badges/metadata?id={}&serial={}", id, serial)
-}
-
 /// The message the user needs to sign to claim the badge under "by key" or "by keys" rule
 pub fn message(id: u64, user: impl fmt::Display) -> String {
     format!("claim badge {} for user {}", id, user)
