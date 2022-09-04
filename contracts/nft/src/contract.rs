@@ -16,7 +16,8 @@ pub type QueryMsg = sg721_base::msg::QueryMsg;
 #[derive(Default)]
 pub struct NftContract<'a>(sg721_base::Sg721Contract<'a, Extension>);
 
-// TODO: perhaps this trait can be derived instead of implemented explicitly
+// Implement the Deref trait, so that we can access the parent contract's methods without explicitly
+// referencing it as `self.0`.
 impl<'a> Deref for NftContract<'a> {
     type Target = sg721_base::Sg721Contract<'a, Extension>;
 

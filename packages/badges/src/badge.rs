@@ -10,7 +10,8 @@ use crate::MintRule;
 pub struct Badge<T> {
     /// Identifier of the badge
     pub id: u64,
-    /// Account who has the authority to edit the badge's info. Generic `T` is either `String` or `cosmwasm_std::Addr`.
+    /// Account who has the authority to edit the badge's info.
+    /// Generic `T` is either `String` or `cosmwasm_std::Addr`.
     pub manager: T,
     /// The badge's metadata
     pub metadata: Metadata,

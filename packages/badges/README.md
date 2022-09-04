@@ -1,6 +1,6 @@
 # Badges
 
-Inspired by [POAP](), Badges allows anyone to create digital badges people who participant in events or achieve certain accomplishments.
+Inspired by [POAP](https://poap.xyz/), Badges allows anyone to create digital badges people who participant in events or achieve certain accomplishments.
 
 This crate contains Rust definition of message and response types used in Badges project.
 

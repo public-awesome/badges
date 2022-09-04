@@ -22,10 +22,28 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     /// Create a new badge with the specified mint rule and metadata
     CreateBadge {
+        /// Manager is the account that can 1) change the badge's metadata, and 2) if using the "by
+        /// keys" mint rule, whitelist pubkeys.
+        ///
+        /// TODO: Make mananger an optional parameter; setting it to None meaning no one can change
+        /// the metadata. Also, allow transferring of manager power in the `edit_badge` method.
+        ///
+        /// NOTE: If using the "by keys" minting rule, manager cannot be None, because a manager is
+        /// is needed to whitelist keys.
         manager: String,
+        /// The badge's metadata, defined by the OpenSea standard
         metadata: Metadata,
+        /// The rule by which this badge is to be minted. There are three available rules; see the
+        /// docs of `badges::MintRule` for details.
         rule: MintRule,
+        /// A deadline only before which the badge can be minted.
+        /// Setting this to None means there is no deadline.
+        /// Can only be set once when creating the badge; cannot be changed later.
         expiry: Option<Expiration>,
+        /// The maximum amount of badge that can be minted. Note, users burning minted badges does
+        /// NOT free up slots for new badges to be minted.
+        /// Setting this to None means there is no max supply.
+        /// Can only be set once when creating the badge; cannot be changed later.
         max_supply: Option<u64>,
     },
     /// Edit the metadata of an existing badge; only the manager can call
@@ -54,22 +72,22 @@ pub enum ExecuteMsg {
         id: u64,
         limit: Option<u32>,
     },
-    /// Mint new instances of a specified trophy to a list of addresses. Called only if the trophy's
-    /// minting rule is set to `ByOwner` and if caller is the owner
+    /// For a badge with the "by minter" mint rule, mint new badges to a set of owners.
+    /// Can only be invoked by the designated minter.
     MintByMinter {
         id: u64,
         /// NOTE: User BTreeSet instead of HashSet, the same reason as discussed above
         owners: BTreeSet<String>,
     },
-    /// Mint a new instance of the trophy by submitting a signature. The message should be the
-    /// caller's address, and the private key is the one created for this trophy. Called only if the
-    /// trophy's minting rule is set to `BySignature`
+    /// For a badge with the "by key" mint rule, mint a badge to the specified owner.
+    /// The caller must submit a signature to prove they have the minting key.
     MintByKey {
         id: u64,
         owner: String,
         signature: String,
     },
-    /// TODO: add docs
+    /// For a badge with the "by keys" mint rule, mint a badge to the specified owner.
+    /// The caller must submit a signature to prove they have one of the whitelisted minting keys.
     MintByKeys {
         id: u64,
         owner: String,

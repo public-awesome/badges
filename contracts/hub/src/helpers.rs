@@ -85,7 +85,7 @@ pub fn assert_eligible(store: &dyn Storage, id: u64, user: &str) -> Result<(), C
     }
 }
 
-/// TODO: add docs
+/// Assert that a badge indeed uses the "by minter" rule, and that the sender is the minter.
 pub fn assert_can_mint_by_minter<T>(badge: &Badge<T>, sender: &Addr) -> Result<(), ContractError> {
     match &badge.rule {
         MintRule::ByMinter(minter) => {
@@ -99,7 +99,8 @@ pub fn assert_can_mint_by_minter<T>(badge: &Badge<T>, sender: &Addr) -> Result<(
     }
 }
 
-/// TODO: add docs
+/// Assert that a badge indeed uses the "by key" rule, and the signature was produced by signing the
+/// correct message with the correct privkey.
 pub fn assert_can_mint_by_key<T>(
     api: &dyn Api,
     badge: &Badge<T>,
@@ -119,8 +120,8 @@ pub fn assert_can_mint_by_key<T>(
     Ok(())
 }
 
-/// TODO: add docs
-/// NOTE: This function does NOT update the `keys` map
+/// Assert that a badge indeed uses the "by keys" rule, and that the signature was produced by
+/// signing the correct message using a whitelisted privkey.
 pub fn assert_can_mint_by_keys<T>(
     deps: Deps,
     badge: &Badge<T>,
