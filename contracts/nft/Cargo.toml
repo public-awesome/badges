@@ -11,6 +11,7 @@ license     = "GPL-3.0-or-later"
 keywords    = ["nft", "cosmos", "cosmwasm", "stargaze"]
 
 [lib]
+crate-type = ["cdylib", "rlib"]
 doctest = false
 
 [features]
@@ -23,7 +24,7 @@ cw2 = "0.13"
 cw721 = "0.13"
 sg721 = "0.14"
 # TODO: update once published on crates.io
-sg721-base = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
+sg721-base = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef", features = ["library"] }
 # TODO: update once published on crates.io
 sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
 sg-std = "0.14"

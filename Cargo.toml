@@ -1,6 +1,14 @@
 [workspace]
 members = ["contracts/*", "packages/*"]
 
+[profile.release.package.badge-hub]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.badge-nft]
+codegen-units = 1
+incremental = false
+
 [profile.release]
 rpath = false
 lto = true
