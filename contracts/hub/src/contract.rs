@@ -1,5 +1,4 @@
 use std::collections::BTreeSet;
-use std::fmt;
 
 use cosmwasm_std::{
     to_binary, Addr, Deps, DepsMut, Empty, Env, MessageInfo, Order, Reply, Response, StdResult,
@@ -46,7 +45,7 @@ pub fn init(
                     collection_info: nft_info,
                 })?,
                 funds: vec![],
-                label: "badge_nft".to_string(),
+                label: "badge-nft".to_string(),
             },
             1,
         ))
@@ -72,6 +71,7 @@ pub fn init_hook(deps: DepsMut, reply: Reply) -> Result<Response, ContractError>
 
 pub fn create_badge(
     deps: DepsMut,
+    env: Env,
     manager: String,
     metadata: Metadata,
     rule: MintRule,
@@ -90,12 +90,10 @@ pub fn create_badge(
         current_supply: 0,
     };
 
-    BADGES.save(deps.storage, id, &badge)?;
+    // the badge must not have already expired or have a max supply of zero
+    assert_available(&badge, &env.block, 1)?;
 
-    // a helper function to help casting Option to String
-    fn stringify_option(opt: Option<impl fmt::Display>) -> String {
-        opt.map_or_else(|| "undefined".to_string(), |value| value.to_string())
-    }
+    BADGES.save(deps.storage, id, &badge)?;
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/create_badge")

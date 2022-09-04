@@ -43,7 +43,7 @@ fn instantiating() {
                 })
                 .unwrap(),
                 funds: vec![],
-                label: "badge_nft".to_string()
+                label: "badge-nft".to_string()
             },
             1
         )]

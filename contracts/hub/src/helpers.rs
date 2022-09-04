@@ -26,6 +26,11 @@ pub fn hash(msg: &str) -> Vec<u8> {
     hasher.finalize().to_vec()
 }
 
+/// A helper function to help casting Option to String
+pub fn stringify_option(opt: Option<impl fmt::Display>) -> String {
+    opt.map_or_else(|| "undefined".to_string(), |value| value.to_string())
+}
+
 /// This is basically a wrapper of `api.secp256k1_verify`, but instead of taking raw bytes in the
 /// form of `&[u8]`, it takes the pubkey and signature as hex-encoded strings, and the original
 /// message before hashing.

@@ -46,7 +46,7 @@ pub mod entry {
                 rule,
                 expiry,
                 max_supply,
-            } => contract::create_badge(deps,  manager, metadata, rule, expiry, max_supply),
+            } => contract::create_badge(deps, env, manager, metadata, rule, expiry, max_supply),
             ExecuteMsg::EditBadge {
                 id,
                 metadata,

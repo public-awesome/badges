@@ -37,6 +37,7 @@ fn mock_badge() -> Badge<Addr> {
 fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
     contract::create_badge(
         deps,
+        utils::mock_env_at_timestamp(10000),
         badge.manager.to_string(),
         badge.metadata.clone(),
         badge.rule.clone(),
@@ -44,6 +45,41 @@ fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
         badge.max_supply,
     )
     .unwrap()
+}
+
+#[test]
+fn creating_unavailable_badges() {
+    let mut deps = setup_test();
+
+    // cannot create a badge that's already expired
+    {
+        let err = contract::create_badge(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(99999),
+            "jake".to_string(),
+            Metadata::default(),
+            MintRule::ByKeys,
+            Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
+            None,
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::Expired);
+    }
+
+    // cannot create a badge that has zero max supply
+    {
+        let err = contract::create_badge(
+            deps.as_mut(),
+            utils::mock_env_at_timestamp(10000),
+            "jake".to_string(),
+            Metadata::default(),
+            MintRule::ByKeys,
+            None,
+            Some(0),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::SoldOut);
+    }
 }
 
 #[test]
