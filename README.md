@@ -1,6 +1,6 @@
 # Badges
 
-Badges is an NFT protocol that allows anyone to permissionlessly create digital badges
+Badges is an NFT protocol that allows anyone to permissionlessly create digital badges, as rewards for participants of events, or people who achieve certain accomplishments.
 
 ## Overview
 
