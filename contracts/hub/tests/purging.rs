@@ -1,6 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies,  MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{attr, Addr, Empty, OwnedDeps, Timestamp};
-use cw_utils::Expiration;
+use cosmwasm_std::{attr, Addr, Empty, OwnedDeps};
 use sg_metadata::Metadata;
 
 use badge_hub::contract;
@@ -21,7 +20,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
             manager: Addr::unchecked("larry"),
             metadata: Metadata::default(),
             rule: MintRule::ByKeys,
-            expiry: Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
+            expiry: Some(12345),
             max_supply: Some(100),
             current_supply: 2,
         },

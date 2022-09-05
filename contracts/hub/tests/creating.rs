@@ -1,6 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_info, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{attr, Addr, DepsMut, Empty, OwnedDeps, Response, Timestamp};
-use cw_utils::Expiration;
+use cosmwasm_std::{attr, Addr, DepsMut, Empty, OwnedDeps, Response};
 use sg_metadata::Metadata;
 
 use badge_hub::contract;
@@ -28,7 +27,7 @@ fn mock_badge() -> Badge<Addr> {
             ..Default::default()
         },
         rule: MintRule::ByKeys,
-        expiry: Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
+        expiry: Some(12345),
         max_supply: Some(100),
         current_supply: 0,
     }
@@ -59,7 +58,7 @@ fn creating_unavailable_badges() {
             "jake".to_string(),
             Metadata::default(),
             MintRule::ByKeys,
-            Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
+            Some(12345),
             None,
         )
         .unwrap_err();
@@ -96,7 +95,7 @@ fn creating_badge() {
                 ..Default::default()
             },
             rule: MintRule::ByMinter("larry".to_string()),
-            expiry: Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
+            expiry: Some(12345),
             max_supply: Some(100),
             current_supply: 0,
         };
@@ -110,7 +109,7 @@ fn creating_badge() {
                 attr("id", "1"),
                 attr("manager", "larry"),
                 attr("rule", "by_minter:larry"),
-                attr("expiry", "expiration time: 12345.000000000"),
+                attr("expiry", "12345"),
                 attr("max_supply", "100")
             ]
         );
@@ -278,11 +277,7 @@ fn adding_keys() {
         assert_eq!(res.messages, vec![]);
         assert_eq!(
             res.attributes,
-            vec![
-                attr("action", "badges/hub/add_keys"),
-                attr("id", "1"),
-                attr("keys_added", "2"),
-            ],
+            vec![attr("action", "badges/hub/add_keys"), attr("id", "1"), attr("keys_added", "2"),],
         );
 
         let keys = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();

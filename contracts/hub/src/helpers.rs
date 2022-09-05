@@ -59,7 +59,7 @@ pub fn assert_available<T>(
     amount: u64,
 ) -> Result<(), ContractError> {
     if let Some(expiry) = badge.expiry {
-        if expiry.is_expired(block) {
+        if block.time.seconds() > expiry {
             return Err(ContractError::Expired);
         }
     }

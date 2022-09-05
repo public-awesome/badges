@@ -1,8 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{
-    attr, to_binary, Addr, Empty, OwnedDeps, StdResult, Storage, SubMsg, Timestamp, WasmMsg,
-};
-use cw_utils::Expiration;
+use cosmwasm_std::{attr, to_binary, Addr, Empty, OwnedDeps, StdResult, Storage, SubMsg, WasmMsg};
 use k256::ecdsa::{SigningKey, VerifyingKey};
 use sg721::MintMsg;
 use sg_metadata::Metadata;
@@ -43,7 +40,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
         manager: Addr::unchecked("larry"),
         metadata: Metadata::default(),
         rule: MintRule::ByKeys,
-        expiry: Some(Expiration::AtTime(Timestamp::from_seconds(12345))),
+        expiry: Some(12345),
         max_supply: Some(100),
         current_supply: 98,
     };

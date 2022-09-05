@@ -46,7 +46,6 @@ name = "badges"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
- "cw-utils",
  "schemars",
  "serde",
  "sg-metadata",

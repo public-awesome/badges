@@ -1,6 +1,5 @@
 use std::collections::BTreeSet;
 
-use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
@@ -39,7 +38,7 @@ pub enum ExecuteMsg {
         /// A deadline only before which the badge can be minted.
         /// Setting this to None means there is no deadline.
         /// Can only be set once when creating the badge; cannot be changed later.
-        expiry: Option<Expiration>,
+        expiry: Option<u64>,
         /// The maximum amount of badge that can be minted. Note, users burning minted badges does
         /// NOT free up slots for new badges to be minted.
         /// Setting this to None means there is no max supply.

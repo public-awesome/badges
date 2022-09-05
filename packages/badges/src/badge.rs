@@ -1,5 +1,4 @@
 use cosmwasm_std::Addr;
-use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg_metadata::Metadata;
@@ -18,7 +17,7 @@ pub struct Badge<T> {
     /// The rule by which instances of this badge are to be minted
     pub rule: MintRule,
     /// The timestamp only before which the badge can be minted
-    pub expiry: Option<Expiration>,
+    pub expiry: Option<u64>,
     /// The maximum number of badge instances can be minted
     pub max_supply: Option<u64>,
     /// The current number of this badge

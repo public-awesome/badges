@@ -5,7 +5,6 @@ use cosmwasm_std::{
     SubMsg, WasmMsg,
 };
 use cw_storage_plus::Bound;
-use cw_utils::Expiration;
 use sg721::{CollectionInfo, MintMsg, RoyaltyInfoResponse};
 use sg_metadata::Metadata;
 
@@ -75,7 +74,7 @@ pub fn create_badge(
     manager: String,
     metadata: Metadata,
     rule: MintRule,
-    expiry: Option<Expiration>,
+    expiry: Option<u64>,
     max_supply: Option<u64>,
 ) -> Result<Response, ContractError> {
     let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
@@ -387,11 +386,7 @@ pub fn query_keys(
     let start = start_after.map(|key| Bound::ExclusiveRaw(key.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
-    KEYS
-        .prefix(id)
-        .keys(deps.storage, start, None, Order::Ascending)
-        .take(limit as usize)
-        .collect()
+    KEYS.prefix(id).keys(deps.storage, start, None, Order::Ascending).take(limit as usize).collect()
 }
 
 /// This function takes `impl Into<String>` instead of `String` so that i can type a few characters

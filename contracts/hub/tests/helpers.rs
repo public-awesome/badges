@@ -1,20 +1,16 @@
-use badge_hub::state::OWNERS;
-use cosmwasm_std::{testing::mock_dependencies, Addr, Empty, Timestamp};
-use cw_utils::Expiration;
+use cosmwasm_std::testing::mock_dependencies;
+use cosmwasm_std::{Addr, Empty};
 use k256::ecdsa::VerifyingKey;
 use sg_metadata::Metadata;
 
+use badge_hub::error::ContractError;
 use badge_hub::helpers::*;
-use badge_hub::{error::ContractError, state::KEYS};
+use badge_hub::state::{KEYS, OWNERS};
 use badges::{Badge, MintRule};
 
 mod utils;
 
-fn mock_badge(
-    rule: Option<MintRule>,
-    expiry: Option<Expiration>,
-    max_supply: Option<u64>,
-) -> Badge<Addr> {
+fn mock_badge(rule: Option<MintRule>, expiry: Option<u64>, max_supply: Option<u64>) -> Badge<Addr> {
     Badge {
         id: 1,
         manager: Addr::unchecked("larry"),
@@ -52,7 +48,7 @@ fn asserting_availability_no_limit() {
 /// Badge has a minting deadline but no max supply
 #[test]
 fn asserting_availability_deadline() {
-    let badge = mock_badge(None, Some(Expiration::AtTime(Timestamp::from_seconds(10000))), None);
+    let badge = mock_badge(None, Some(10000), None);
 
     // deadline is not reached
     let env = utils::mock_env_at_timestamp(9999);
