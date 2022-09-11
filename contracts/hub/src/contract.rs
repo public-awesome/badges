@@ -101,6 +101,7 @@ pub fn create_badge(
         .add_attribute("action", "badges/hub/create_badge")
         .add_attribute("id", id.to_string())
         .add_attribute("manager", badge.manager)
+        .add_attribute("transferrable", badge.transferrable.to_string())
         .add_attribute("rule", badge.rule.to_string())
         .add_attribute("expiry", stringify_option(badge.expiry))
         .add_attribute("max_supply", stringify_option(badge.max_supply)))
