@@ -14,6 +14,7 @@ version = "1.0.0"
 dependencies = [
  "badges",
  "cosmwasm-std",
+ "cw-item-set",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
@@ -219,6 +220,16 @@ dependencies = [
  "rand_core 0.5.1",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "cw-item-set"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b6602e21a9334197ed1f14345e42879f0ffc3bcc2abb0ec0b064f5103d62ec5"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
 ]
 
 [[package]]

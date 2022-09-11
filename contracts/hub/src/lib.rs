@@ -96,7 +96,7 @@ pub mod entry {
             QueryMsg::Key {
                 id,
                 pubkey,
-            } => to_binary(&contract::query_key(deps, id, pubkey)?),
+            } => to_binary(&contract::query_key(deps, id, pubkey)),
             QueryMsg::Keys {
                 id,
                 start_after,
@@ -105,7 +105,7 @@ pub mod entry {
             QueryMsg::Owner {
                 id,
                 owner,
-            } => to_binary(&contract::query_owner(deps, id, owner)?),
+            } => to_binary(&contract::query_owner(deps, id, owner)),
             QueryMsg::Owners {
                 id,
                 start_after,

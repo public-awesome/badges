@@ -156,15 +156,11 @@ pub fn add_keys(
         hex::decode(key)?;
 
         // the key must not already exist
-        KEYS.update(deps.storage, (id, key), |opt| {
-            if opt.is_none() {
-                Ok(Empty {})
-            } else {
-                Err(ContractError::key_exists(id, key))
-            }
-        })?;
-
-        Ok(())
+        if KEYS.insert(deps.storage, (id, key))? {
+            Ok(())
+        } else {
+            Err(ContractError::key_exists(id, key))
+        }
     })?;
 
     Ok(Response::new()
@@ -193,7 +189,9 @@ pub fn purge_keys(
     // need to collect the keys into a Vec first before creating a new iterator to delete them
     // because of how Rust works
     let keys = query_keys(deps.as_ref(), id, None, limit)?;
-    keys.iter().for_each(|key| KEYS.remove(deps.storage, (id, key)));
+    for key in &keys {
+        KEYS.remove(deps.storage, (id, key));
+    };
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/purge_keys")
@@ -215,7 +213,9 @@ pub fn purge_owners(
     // need to collect the user addresses into a Vec first before creating a new iterator to delete
     // them because of how Rust works
     let owners = query_owners(deps.as_ref(), id, None, limit)?;
-    owners.iter().for_each(|user| OWNERS.remove(deps.storage, (id, user)));
+    for owner in &owners {
+        OWNERS.remove(deps.storage, (id, owner));
+    };
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/purge_owners")
@@ -284,7 +284,7 @@ pub fn mint_by_key(
     badge.current_supply += 1;
     BADGES.save(deps.storage, id, &badge)?;
 
-    OWNERS.save(deps.storage, (id, &owner), &Empty {})?;
+    OWNERS.insert(deps.storage, (id, &owner))?;
 
     Ok(Response::new()
         .add_message(WasmMsg::Execute {
@@ -326,7 +326,7 @@ pub fn mint_by_keys(
     BADGES.save(deps.storage, id, &badge)?;
 
     KEYS.remove(deps.storage, (id, &pubkey));
-    OWNERS.save(deps.storage, (id, &owner), &Empty {})?;
+    OWNERS.insert(deps.storage, (id, &owner))?;
 
     Ok(Response::new()
         .add_message(WasmMsg::Execute {
@@ -375,9 +375,8 @@ pub fn query_badges(
         .collect()
 }
 
-pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> StdResult<bool> {
-    let res = KEYS.may_load(deps.storage, (id, &pubkey.into()))?;
-    Ok(res.is_some())
+pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> bool {
+    KEYS.contains(deps.storage, (id, &pubkey.into()))
 }
 
 pub fn query_keys(
@@ -394,9 +393,8 @@ pub fn query_keys(
 
 /// This function takes `impl Into<String>` instead of `String` so that i can type a few characters
 /// less in the unit tests =)
-pub fn query_owner(deps: Deps, id: u64, user: impl Into<String>) -> StdResult<bool> {
-    let res = OWNERS.may_load(deps.storage, (id, &user.into()))?;
-    Ok(res.is_some())
+pub fn query_owner(deps: Deps, id: u64, user: impl Into<String>) -> bool {
+    OWNERS.contains(deps.storage, (id, &user.into()))
 }
 
 pub fn query_owners(

@@ -83,7 +83,7 @@ pub fn assert_unavailable<T>(badge: &Badge<T>, block: &BlockInfo) -> Result<(), 
 
 /// Assert that an account has not already minted a badge.
 pub fn assert_eligible(store: &dyn Storage, id: u64, user: &str) -> Result<(), ContractError> {
-    if OWNERS.may_load(store, (id, user))?.is_none() {
+    if !OWNERS.contains(store, (id, user)) {
         Ok(())
     } else {
         Err(ContractError::already_claimed(id, user))
@@ -141,7 +141,7 @@ pub fn assert_can_mint_by_keys<T>(
     }
 
     // the key must be whitelisted
-    if KEYS.may_load(deps.storage, (badge.id, pubkey))?.is_none() {
+    if !KEYS.contains(deps.storage, (badge.id, pubkey)) {
         return Err(ContractError::key_does_not_exist(badge.id));
     }
 

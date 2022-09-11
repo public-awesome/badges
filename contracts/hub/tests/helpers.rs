@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::mock_dependencies;
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::Addr;
 use k256::ecdsa::VerifyingKey;
 use sg_metadata::Metadata;
 
@@ -96,7 +96,7 @@ fn asserting_eligible() {
 
     // user has already claimed
     {
-        OWNERS.save(deps.as_mut().storage, (badge.id, user), &Empty {}).unwrap();
+        OWNERS.insert(deps.as_mut().storage, (badge.id, user)).unwrap();
         assert_eq!(
             assert_eligible(deps.as_ref().storage, badge.id, user),
             Err(ContractError::already_claimed(badge.id, user)),
@@ -178,7 +178,7 @@ fn asserting_can_mint_by_keys() {
     let msg = message(badge.id, owner);
     let signature = utils::sign(&privkey, &msg);
 
-    KEYS.save(deps.as_mut().storage, (badge.id, &pubkey_str), &Empty {}).unwrap();
+    KEYS.insert(deps.as_mut().storage, (badge.id, &pubkey_str)).unwrap();
 
     // use a whitelisted key and sign the correct message
     {

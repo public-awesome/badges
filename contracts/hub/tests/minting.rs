@@ -84,7 +84,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
         )
         .unwrap();
 
-    KEYS.save(deps.as_mut().storage, (3, &pubkey_str), &Empty {}).unwrap();
+    KEYS.insert(deps.as_mut().storage, (3, &pubkey_str)).unwrap();
 
     deps
 }
@@ -281,7 +281,7 @@ fn minting_by_key() {
         assert_eq!(badge.current_supply, 99);
 
         // larry should be marked as already received
-        let claimed = contract::query_owner(deps.as_ref(), 2, "larry").unwrap();
+        let claimed = contract::query_owner(deps.as_ref(), 2, "larry");
         assert!(claimed);
     }
 
@@ -427,11 +427,11 @@ fn minting_by_keys() {
         assert_eq!(badge.current_supply, 99);
 
         // larry should be marked as already received
-        let claimed = contract::query_owner(deps.as_ref(), 3, "larry").unwrap();
+        let claimed = contract::query_owner(deps.as_ref(), 3, "larry");
         assert!(claimed);
 
         // the pubkey should be removed from the whitelist
-        let whitelisted = contract::query_key(deps.as_ref(), 3, &pubkey_str).unwrap();
+        let whitelisted = contract::query_key(deps.as_ref(), 3, &pubkey_str);
         assert!(!whitelisted);
     }
 
@@ -454,7 +454,7 @@ fn minting_by_keys() {
 
     // attempt to mint to the same user again
     {
-        KEYS.save(deps.as_mut().storage, (3, "larry"), &Empty {}).unwrap();
+        KEYS.insert(deps.as_mut().storage, (3, "larry")).unwrap();
 
         let err = contract::mint_by_keys(
             deps.as_mut(),

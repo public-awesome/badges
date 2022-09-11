@@ -28,11 +28,11 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     )
     .unwrap();
 
-    KEYS.save(deps.as_mut().storage, (1, "1234abcd"), &Empty{}).unwrap();
-    KEYS.save(deps.as_mut().storage, (1, "4321dcba"), &Empty {}).unwrap();
+    KEYS.insert(deps.as_mut().storage, (1, "1234abcd")).unwrap();
+    KEYS.insert(deps.as_mut().storage, (1, "4321dcba")).unwrap();
 
-    OWNERS.save(deps.as_mut().storage, (1, "jake"), &Empty{}).unwrap();
-    OWNERS.save(deps.as_mut().storage, (1, "pumpkin"), &Empty{}).unwrap();
+    OWNERS.insert(deps.as_mut().storage, (1, "jake")).unwrap();
+    OWNERS.insert(deps.as_mut().storage, (1, "pumpkin")).unwrap();
 
     deps
 }
