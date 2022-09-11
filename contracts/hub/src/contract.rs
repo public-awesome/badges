@@ -364,11 +364,11 @@ pub fn query_badges(
     limit: Option<u32>,
 ) -> StdResult<Vec<Badge<String>>> {
     let start = start_after.map(Bound::exclusive);
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     BADGES
         .range(deps.storage, start, None, Order::Ascending)
-        .take(limit as usize)
+        .take(limit)
         .map(|item| {
             let (_, v) = item?;
             Ok(v.into())
@@ -387,9 +387,13 @@ pub fn query_keys(
     limit: Option<u32>,
 ) -> StdResult<Vec<String>> {
     let start = start_after.map(|key| Bound::ExclusiveRaw(key.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    KEYS.prefix(id).keys(deps.storage, start, None, Order::Ascending).take(limit as usize).collect()
+    KEYS
+        .prefix(id)
+        .keys(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .collect()
 }
 
 /// This function takes `impl Into<String>` instead of `String` so that i can type a few characters
@@ -405,11 +409,11 @@ pub fn query_owners(
     limit: Option<u32>,
 ) -> StdResult<Vec<String>> {
     let start = start_after.map(|user| Bound::ExclusiveRaw(user.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     OWNERS
         .prefix(id)
         .keys(deps.storage, start, None, Order::Ascending)
-        .take(limit as usize)
+        .take(limit)
         .collect()
 }
