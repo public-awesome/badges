@@ -26,6 +26,7 @@ fn mock_badge() -> Badge<Addr> {
             name: Some("first-badge".to_string()),
             ..Default::default()
         },
+        transferrable: true,
         rule: MintRule::ByKeys,
         expiry: Some(12345),
         max_supply: Some(100),
@@ -39,6 +40,7 @@ fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
         utils::mock_env_at_timestamp(10000),
         badge.manager.to_string(),
         badge.metadata.clone(),
+        badge.transferrable,
         badge.rule.clone(),
         badge.expiry,
         badge.max_supply,
@@ -57,6 +59,7 @@ fn creating_unavailable_badges() {
             utils::mock_env_at_timestamp(99999),
             "jake".to_string(),
             Metadata::default(),
+            true,
             MintRule::ByKeys,
             Some(12345),
             None,
@@ -72,6 +75,7 @@ fn creating_unavailable_badges() {
             utils::mock_env_at_timestamp(10000),
             "jake".to_string(),
             Metadata::default(),
+            true,
             MintRule::ByKeys,
             None,
             Some(0),
@@ -94,6 +98,7 @@ fn creating_badge() {
                 name: Some("first-badge".to_string()),
                 ..Default::default()
             },
+            transferrable: true,
             rule: MintRule::ByMinter("larry".to_string()),
             expiry: Some(12345),
             max_supply: Some(100),
@@ -130,6 +135,7 @@ fn creating_badge() {
                 name: Some("second-badge".to_string()),
                 ..Default::default()
             },
+            transferrable: true,
             rule: MintRule::ByKeys,
             expiry: None,
             max_supply: None,

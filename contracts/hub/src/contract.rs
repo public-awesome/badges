@@ -68,11 +68,13 @@ pub fn init_hook(deps: DepsMut, reply: Reply) -> Result<Response, ContractError>
         .add_attribute("nft", nft_addr.to_string()))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_badge(
     deps: DepsMut,
     env: Env,
     manager: String,
     metadata: Metadata,
+    transferrable: bool,
     rule: MintRule,
     expiry: Option<u64>,
     max_supply: Option<u64>,
@@ -83,6 +85,7 @@ pub fn create_badge(
         id,
         manager: deps.api.addr_validate(&manager)?,
         metadata,
+        transferrable,
         rule,
         expiry,
         max_supply,

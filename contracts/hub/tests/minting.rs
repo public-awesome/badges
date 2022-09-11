@@ -39,6 +39,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
         id: 0,
         manager: Addr::unchecked("larry"),
         metadata: Metadata::default(),
+        transferrable: true,
         rule: MintRule::ByKeys,
         expiry: Some(12345),
         max_supply: Some(100),

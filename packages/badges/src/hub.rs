@@ -32,6 +32,8 @@ pub enum ExecuteMsg {
         manager: String,
         /// The badge's metadata, defined by the OpenSea standard
         metadata: Metadata,
+        /// Whether this badge is transferrable
+        transferrable: bool,
         /// The rule by which this badge is to be minted. There are three available rules; see the
         /// docs of `badges::MintRule` for details.
         rule: MintRule,

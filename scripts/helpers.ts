@@ -1,14 +1,6 @@
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { stringToPath } from "@cosmjs/crypto";
-import { GasPrice } from "@cosmjs/stargate";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import * as dotenv from "dotenv";
-
-const RPC: { [key: string]: string } = {
-  mainnet: "https://rpc.stargaze-apis.com:443",
-  testnet: "https://rpc.elgafar-1.stargaze-apis.com:443",
-  local: "http://localhost:26657",
-};
+import { GasPrice } from "@cosmjs/stargate";
 
 // NoteJS gives the following annoying warning when creating the signing client:
 //
@@ -37,30 +29,24 @@ export function suppressFetchAPIWarning() {
   };
 }
 
-export async function createSigningClient() {
-  process.stdout.write("reading environment variables... ");
-  dotenv.config();
-  const network = process.env["NETWORK"]!;
-  const mnemonic = process.env["MNEMONIC"]!;
-  const coinType = process.env["BIP44_COIN_TYPE"] ?? "118";
-  console.log("success!");
+const RPC_URLS: { [key: string]: string } = {
+  mainnet: "https://rpc.stargaze-apis.com:443",
+  testnet: "https://rpc.elgafar-1.stargaze-apis.com:443",
+  localhost: "http://localhost:26657",
+};
 
-  const rpcUrl = RPC[network]!;
+export async function createSigningClient(network: string, wallet: DirectSecp256k1HdWallet) {
+  const rpcUrl = RPC_URLS[network]!;
   console.log("using RPC URL", rpcUrl);
 
-  process.stdout.write("creating signer... ");
-  const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-    prefix: "stars",
-    hdPaths: [stringToPath(`m/44'/${coinType}'/0'/0/0`)],
-  });
-  const signerAddr = (await signer.getAccounts())[0]!.address;
-  console.log("success! signer address:", signerAddr);
+  const senderAddr = (await wallet.getAccounts())[0]!.address;
+  console.log("using sender address:", senderAddr);
 
   process.stdout.write("creating signing client... ");
-  const client = await SigningCosmWasmClient.connectWithSigner(rpcUrl, signer, {
+  const client = await SigningCosmWasmClient.connectWithSigner(rpcUrl, wallet, {
     gasPrice: GasPrice.fromString("0ustars"),
   });
   console.log("success!");
 
-  return { signer, signerAddr, client };
+  return { senderAddr, client };
 }

@@ -43,10 +43,11 @@ pub mod entry {
             ExecuteMsg::CreateBadge {
                 manager,
                 metadata,
+                transferrable,
                 rule,
                 expiry,
                 max_supply,
-            } => contract::create_badge(deps, env, manager, metadata, rule, expiry, max_supply),
+            } => contract::create_badge(deps, env, manager, metadata, transferrable, rule, expiry, max_supply),
             ExecuteMsg::EditBadge {
                 id,
                 metadata,

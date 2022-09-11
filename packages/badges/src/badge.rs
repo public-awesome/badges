@@ -14,6 +14,8 @@ pub struct Badge<T> {
     pub manager: T,
     /// The badge's metadata
     pub metadata: Metadata,
+    /// Whether this badge is transferrable
+    pub transferrable: bool,
     /// The rule by which instances of this badge are to be minted
     pub rule: MintRule,
     /// The timestamp only before which the badge can be minted
@@ -34,6 +36,7 @@ impl From<Badge<Addr>> for Badge<String> {
             id: badge.id,
             manager: badge.manager.to_string(),
             metadata: badge.metadata,
+            transferrable: badge.transferrable,
             rule: badge.rule,
             expiry: badge.expiry,
             max_supply: badge.max_supply,

@@ -2,16 +2,13 @@ use std::any::type_name;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use cosmwasm_std::{Deps, Empty, Env, StdError, StdResult};
+use cosmwasm_std::{Deps, Env, StdError, StdResult};
 use cw721::{AllNftInfoResponse, Cw721Query, NftInfoResponse};
 use sg_metadata::{Metadata, Trait};
 
 use badges::Badge;
 
-pub type Extension = Option<Empty>;
-pub type InstantiateMsg = sg721::InstantiateMsg;
-pub type ExecuteMsg = sg721::ExecuteMsg<Extension>;
-pub type QueryMsg = sg721_base::msg::QueryMsg;
+use crate::msg::Extension;
 
 #[derive(Default)]
 pub struct NftContract<'a>(sg721_base::Sg721Contract<'a, Extension>);
@@ -27,6 +24,18 @@ impl<'a> Deref for NftContract<'a> {
 }
 
 impl<'a> NftContract<'a> {
+    /// Assert that the badge is transferrable
+    pub fn assert_transferrable(&self, deps: Deps, token_id: impl ToString) -> StdResult<()> {
+        let (id, _) = parse_token_id(&token_id.to_string())?;
+        let badge = self.query_badge(deps, id)?;
+        dbg!(badge.clone());
+        if badge.transferrable {
+            Ok(())
+        } else {
+            Err(StdError::generic_err(format!("badge {} is not transferrable", id)))
+        }
+    }
+
     /// Overrides vanilla cw721's `nft_info` method
     pub fn nft_info(
         &self,
@@ -35,10 +44,10 @@ impl<'a> NftContract<'a> {
     ) -> StdResult<NftInfoResponse<Metadata>> {
         let (id, serial) = parse_token_id(&token_id.to_string())?;
         let uri = uri(id, serial);
-        let metadata = self.query_metadata(deps, id)?;
+        let badge = self.query_badge(deps, id)?;
         Ok(NftInfoResponse {
             token_uri: Some(uri),
-            extension: prepend_traits(metadata, id, serial),
+            extension: prepend_traits(badge.metadata, id, serial),
         })
     }
 
@@ -66,15 +75,14 @@ impl<'a> NftContract<'a> {
     /// To save storage space, we save the badge's metadata at the Hub contract, instead of saving
     /// a separate copy in each token's extension. This function queries the Hub contract for the
     /// metadata of a given token id.
-    fn query_metadata(&self, deps: Deps, id: u64) -> StdResult<Metadata> {
+    fn query_badge(&self, deps: Deps, id: u64) -> StdResult<Badge<String>> {
         let minter = self.parent.minter(deps)?;
-        let badge: Badge<String> = deps.querier.query_wasm_smart(
+        deps.querier.query_wasm_smart(
             &minter.minter,
             &badges::hub::QueryMsg::Badge {
                 id,
             },
-        )?;
-        Ok(badge.metadata)
+        )
     }
 }
 

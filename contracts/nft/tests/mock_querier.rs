@@ -67,8 +67,8 @@ impl Default for HubQuerier {
 }
 
 impl HubQuerier {
-    pub fn set_badge(&mut self, id: u64, badge: Badge<String>) {
-        self.badges.insert(id, badge);
+    pub fn set_badge(&mut self, badge: Badge<String>) {
+        self.badges.insert(badge.id, badge);
     }
 
     pub fn handle_query(&self, contract_addr: &Addr, msg: hub::QueryMsg) -> QuerierResult {

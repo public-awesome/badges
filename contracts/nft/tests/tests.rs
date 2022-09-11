@@ -1,13 +1,15 @@
 use std::any::type_name;
 use std::marker::PhantomData;
 
+use badge_nft::entry;
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::{Empty, OwnedDeps, StdError};
 use cw721::{AllNftInfoResponse, Cw721Query};
 use sg721::CollectionInfo;
 use sg_metadata::{Metadata, Trait};
 
-use badge_nft::contract::{parse_token_id, prepend_traits, NftContract, Extension};
+use badge_nft::contract::{parse_token_id, prepend_traits, NftContract};
+use badge_nft::msg::Extension;
 use badges::{Badge, MintRule};
 
 mod mock_querier;
@@ -34,18 +36,27 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
         custom_query_type: PhantomData,
     };
 
-    deps.querier.hub.set_badge(
-        69,
-        Badge {
-            id: 69,
-            manager: "larry".to_string(),
-            metadata: mock_metadata(),
-            rule: MintRule::ByKeys,
-            expiry: None,
-            max_supply: None,
-            current_supply: 420,
-        },
-    );
+    deps.querier.hub.set_badge(Badge {
+        id: 69,
+        manager: "larry".to_string(),
+        metadata: mock_metadata(),
+        transferrable: true,
+        rule: MintRule::ByKeys,
+        expiry: None,
+        max_supply: None,
+        current_supply: 420,
+    });
+
+    deps.querier.hub.set_badge(Badge {
+        id: 420,
+        manager: "jake".to_string(),
+        metadata: mock_metadata(),
+        transferrable: false,
+        rule: MintRule::ByKeys,
+        expiry: None,
+        max_supply: None,
+        current_supply: 88888,
+    });
 
     let contract = NftContract::default();
 
@@ -83,6 +94,20 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
                 owner: "jake".to_string(),
                 token_uri: None,
                 extension: None,
+            },
+        )
+        .unwrap();
+
+    contract
+        .mint(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("hub", &[]),
+            sg721::MintMsg::<Extension> {
+                token_id: "420|69".to_string(),
+            owner: "pumpkin".to_string(),
+            token_uri: None,
+            extension: None,
             },
         )
         .unwrap();
@@ -161,6 +186,44 @@ fn instantiating() {
         .owner_of(deps.as_ref(), mock_env(), "69|420".to_string(), false)
         .unwrap();
     assert_eq!(owner.owner, "jake");
+}
+
+#[test]
+fn rejecting_transfers() {
+    let mut deps = setup_test();
+    let contract = NftContract::default();
+
+    // attempt to transfer a transferrable token, should work
+    entry::execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("jake", &[]),
+        badge_nft::msg::ExecuteMsg::TransferNft {
+            recipient: "pumpkin".to_string(),
+            token_id: "69|420".to_string(),
+        },
+    )
+    .unwrap();
+    let owner = contract
+        .parent
+        .owner_of(deps.as_ref(), mock_env(), "69|420".to_string(), false)
+        .unwrap();
+    assert_eq!(owner.owner, "pumpkin");
+
+    // attempt to transfer a untransferrable token, should fail
+    let err = entry::execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("pumpkin", &[]),
+        badge_nft::msg::ExecuteMsg::TransferNft {
+            recipient: "jake".to_string(),
+            token_id: "420|69".to_string(),
+        },
+    )
+    .unwrap_err();
+    // sg721_base::ContractError does not implement Eq or PartialEq, so we can't directly compare
+    // the error types here
+    assert_eq!(err.to_string(), "Generic error: badge 420 is not transferrable");
 }
 
 #[test]

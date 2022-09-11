@@ -27,7 +27,7 @@ ts-node 2_store_codes.ts --hub-wasm path --nft-wasm path \
 
 On mainnet, it is necessary to create a governance proposal for each code. Use the [`starsd`](https://github.com/public-awesome/stargaze) CLI to create proposals.
 
-Instantiate contracts:
+Once codes have been stored, instantiate the contracts:
 
 ```bash
 ts-node 4_instantiate.ts --hub-code-id number --nft-code-id number \

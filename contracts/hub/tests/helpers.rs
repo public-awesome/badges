@@ -15,6 +15,7 @@ fn mock_badge(rule: Option<MintRule>, expiry: Option<u64>, max_supply: Option<u6
         id: 1,
         manager: Addr::unchecked("larry"),
         metadata: Metadata::default(),
+        transferrable: true,
         rule: rule.unwrap_or(MintRule::ByKeys),
         expiry,
         max_supply,

@@ -1,4 +1,5 @@
 pub mod contract;
+pub mod msg;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -9,6 +10,7 @@ pub mod entry {
     use sg_std::Response;
 
     use crate::contract::*;
+    use crate::msg::*;
 
     #[entry_point]
     pub fn instantiate(
@@ -27,7 +29,24 @@ pub mod entry {
         info: MessageInfo,
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
-        NftContract::default().execute(deps, env, info, msg)
+        let tract = NftContract::default();
+        // Transfers and approvals are only allowed if the badge is transferrable
+        match &msg {
+            ExecuteMsg::TransferNft {
+                token_id,
+                ..
+            } => tract.assert_transferrable(deps.as_ref(), token_id)?,
+            ExecuteMsg::SendNft {
+                token_id,
+                ..
+            } => tract.assert_transferrable(deps.as_ref(), token_id)?,
+            ExecuteMsg::Approve {
+                token_id,
+                ..
+            } => tract.assert_transferrable(deps.as_ref(), token_id)?,
+            _ => (),
+        }
+        tract.execute(deps, env, info, msg)
     }
 
     #[entry_point]
