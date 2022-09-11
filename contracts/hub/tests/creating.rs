@@ -113,6 +113,7 @@ fn creating_badge() {
                 attr("action", "badges/hub/create_badge"),
                 attr("id", "1"),
                 attr("manager", "larry"),
+                attr("transferrable", "true"),
                 attr("rule", "by_minter:larry"),
                 attr("expiry", "12345"),
                 attr("max_supply", "100")
@@ -135,7 +136,7 @@ fn creating_badge() {
                 name: Some("second-badge".to_string()),
                 ..Default::default()
             },
-            transferrable: true,
+            transferrable: false,
             rule: MintRule::ByKeys,
             expiry: None,
             max_supply: None,
@@ -150,6 +151,7 @@ fn creating_badge() {
                 attr("action", "badges/hub/create_badge"),
                 attr("id", "2"),
                 attr("manager", "jake"),
+                attr("transferrable", "false"),
                 attr("rule", "by_keys"),
                 attr("expiry", "undefined"),
                 attr("max_supply", "undefined")
