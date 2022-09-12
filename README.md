@@ -39,7 +39,7 @@ Instead, only a single copy of the metadata is stored at the Hub contract. When 
 
 ### Purging
 
-The Hub contract implements two methods, `purge_keys` and `purge_users`, which allows anyone to delete certain contract data once they are no longer needed. This reduces the blockchain's state size and the burden for node operators.
+The Hub contract implements two methods, `purge_keys` and `purge_owners`, which allows anyone to delete certain contract data once they are no longer needed. This reduces the blockchain's state size and the burden for node operators.
 
 ## Deployment
 
