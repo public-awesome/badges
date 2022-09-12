@@ -28,7 +28,6 @@ impl<'a> NftContract<'a> {
     pub fn assert_transferrable(&self, deps: Deps, token_id: impl ToString) -> StdResult<()> {
         let (id, _) = parse_token_id(&token_id.to_string())?;
         let badge = self.query_badge(deps, id)?;
-        dbg!(badge.clone());
         if badge.transferrable {
             Ok(())
         } else {
