@@ -109,9 +109,9 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
             mock_info("hub", &[]),
             sg721::MintMsg::<Extension> {
                 token_id: "420|69".to_string(),
-            owner: "pumpkin".to_string(),
-            token_uri: None,
-            extension: None,
+                owner: "pumpkin".to_string(),
+                token_uri: None,
+                extension: None,
             },
         )
         .unwrap();
