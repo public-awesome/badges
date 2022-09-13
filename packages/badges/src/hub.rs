@@ -3,17 +3,12 @@ use std::collections::BTreeSet;
 use cosmwasm_std::Decimal;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
 use sg_metadata::Metadata;
 
 use crate::{Badge, MintRule};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
-    /// Code ID of the Badge NFT contract
-    pub nft_code_id: u64,
-    /// Collection description, per SG-721 specs
-    pub nft_info: CollectionInfo<RoyaltyInfoResponse>,
     /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
     pub fee_per_byte: Decimal,
 }
@@ -105,6 +100,17 @@ pub enum ExecuteMsg {
         owner: String,
         pubkey: String,
         signature: String,
+    },
+    /// During deployment, once the NFT contract has been deployed, the developer informs Hub of the
+    /// NFT contract's address.
+    ///
+    /// Can only be invoked once by the developer.
+    ///
+    /// Ideally, on a chain with permissionless contract deployment, we would have the Hub deploy
+    /// the NFT contract, and get its address by parsing the reply. However, this doesn't work on
+    /// chains with permissioned deployment such as Stargaze.
+    SetNft {
+        nft: String,
     },
 }
 

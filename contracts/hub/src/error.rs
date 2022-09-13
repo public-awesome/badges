@@ -26,6 +26,12 @@ pub enum ContractError {
     #[error("signature verification failed")]
     InvalidSignature,
 
+    #[error("variable cannot be initialized twice")]
+    DoubleInit,
+
+    #[error("unauthorized: sender is not project developer")]
+    NotDeveloper,
+
     #[error("unauthorized: sender is not badge manager")]
     NotManager,
 

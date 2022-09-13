@@ -1,9 +1,7 @@
 use std::collections::BTreeSet;
 
-use cosmwasm_std::{
-    to_binary, Addr, Decimal, DepsMut, Empty, Env, MessageInfo, Reply, StdResult, SubMsg, WasmMsg,
-};
-use sg721::{CollectionInfo, MintMsg, RoyaltyInfoResponse};
+use cosmwasm_std::{to_binary, Addr, Decimal, DepsMut, Empty, Env, MessageInfo, StdResult, WasmMsg};
+use sg721::MintMsg;
 use sg_metadata::Metadata;
 use sg_std::Response;
 use badges::{Badge, MintRule};
@@ -20,54 +18,37 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const DEFAULT_LIMIT: u32 = 10;
 pub const MAX_LIMIT: u32 = 30;
 
-pub fn init(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    nft_code_id: u64,
-    nft_info: CollectionInfo<RoyaltyInfoResponse>,
-    fee_per_byte: Decimal,
-) -> StdResult<Response> {
+pub fn init(deps: DepsMut, developer: Addr, fee_per_byte: Decimal) -> StdResult<Response> {
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    DEVELOPER.save(deps.storage, &info.sender)?;
+    DEVELOPER.save(deps.storage, &developer)?;
     BADGE_COUNT.save(deps.storage, &0)?;
     FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
 
     Ok(Response::new()
-        .add_submessage(SubMsg::reply_on_success(
-            WasmMsg::Instantiate {
-                admin: Some(info.sender.to_string()),
-                code_id: nft_code_id,
-                msg: to_binary(&sg721::InstantiateMsg {
-                    name: "Badges".to_string(),
-                    symbol: "B".to_string(),
-                    minter: env.contract.address.to_string(),
-                    collection_info: nft_info,
-                })?,
-                funds: vec![],
-                label: "badge-nft".to_string(),
-            },
-            1,
-        ))
         .add_attribute("action", "badges/hub/init")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION))
 }
 
-pub fn init_hook(deps: DepsMut, reply: Reply) -> Result<Response, ContractError> {
-    let res = cw_utils::parse_reply_instantiate_data(reply)?;
-    let nft_addr = deps.api.addr_validate(&res.contract_address)?;
+pub fn set_nft(deps: DepsMut, sender_addr: Addr, nft: &str) -> Result<Response, ContractError> {
+    let developer_addr = DEVELOPER.load(deps.storage)?;
+
+    if sender_addr != developer_addr {
+        return Err(ContractError::NotDeveloper);
+    }
+
+    if NFT.may_load(deps.storage)?.is_some() {
+        return Err(ContractError::DoubleInit);
+    }
+
+    let nft_addr = deps.api.addr_validate(nft)?;
+
     NFT.save(deps.storage, &nft_addr)?;
 
     Ok(Response::new()
-        .add_message(WasmMsg::Execute {
-            contract_addr: nft_addr.to_string(),
-            msg: to_binary(&sg721::ExecuteMsg::<Option<Empty>>::_Ready {})?,
-            funds: vec![],
-        })
-        .add_attribute("action", "badges/hub/init_hook")
-        .add_attribute("nft", nft_addr.to_string()))
+        .add_attribute("action", "badges/hub/set_nft")
+        .add_attribute("nft", nft))
 }
 
 pub fn set_fee_rate(deps: DepsMut, fee_per_byte: Decimal) -> StdResult<Response> {

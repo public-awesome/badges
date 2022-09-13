@@ -37,5 +37,4 @@ thiserror = "1"
 [dev-dependencies]
 # can't use the latest v0.11; has version conflicts of the ecdsa package
 k256 = "0.10"
-prost = "0.9"
 rand = "0.8"

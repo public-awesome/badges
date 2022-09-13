@@ -1,6 +1,4 @@
-use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult,
-};
+use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use sg_std::Response;
 
 use badges::hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
@@ -12,26 +10,11 @@ use crate::{execute, query};
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    execute::init(
-        deps,
-        env,
-        info,
-        msg.nft_code_id,
-        msg.nft_info,
-        msg.fee_per_byte,
-    )
-}
-
-#[entry_point]
-pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
-    match reply.id {
-        1 => execute::init_hook(deps, reply),
-        id => Err(ContractError::InvalidReplyId(id)),
-    }
+    execute::init(deps, info.sender, msg.fee_per_byte)
 }
 
 #[entry_point]
@@ -101,6 +84,9 @@ pub fn execute(
             pubkey,
             signature,
         } => execute::mint_by_keys(deps, env, id, owner, pubkey, signature),
+        ExecuteMsg::SetNft {
+            nft,
+        } => execute::set_nft(deps, info.sender, &nft),
     }
 }
 

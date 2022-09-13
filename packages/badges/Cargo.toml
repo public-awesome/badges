@@ -17,6 +17,5 @@ doctest = false
 cosmwasm-std = "1.0"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-sg721 = "0.14"
 # TODO: update once published on crates.io
 sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
