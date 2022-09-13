@@ -4,10 +4,10 @@ use k256::ecdsa::{SigningKey, VerifyingKey};
 use sg721::MintMsg;
 use sg_metadata::Metadata;
 
-use badge_hub::contract;
 use badge_hub::error::ContractError;
 use badge_hub::helpers::{message, token_id};
 use badge_hub::state::*;
+use badge_hub::{execute, query};
 use badges::{Badge, MintRule};
 
 mod utils;
@@ -91,7 +91,7 @@ fn minting_by_minter() {
 
     // wrong mint type
     {
-        let err = contract::mint_by_minter(
+        let err = execute::mint_by_minter(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -104,7 +104,7 @@ fn minting_by_minter() {
 
     // non-minter cannot mint
     {
-        let err = contract::mint_by_minter(
+        let err = execute::mint_by_minter(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
@@ -117,7 +117,7 @@ fn minting_by_minter() {
 
     // cannot mint past max supply
     {
-        let err = contract::mint_by_minter(
+        let err = execute::mint_by_minter(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
@@ -130,7 +130,7 @@ fn minting_by_minter() {
 
     // cannot mint after expiry
     {
-        let err = contract::mint_by_minter(
+        let err = execute::mint_by_minter(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             1,
@@ -164,7 +164,7 @@ fn minting_by_minter() {
                 .collect::<Vec<_>>()
         };
 
-        let res = contract::mint_by_minter(
+        let res = execute::mint_by_minter(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
@@ -195,7 +195,7 @@ fn minting_by_key() {
 
     // wrong mint rule
     {
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -211,7 +211,7 @@ fn minting_by_key() {
         let false_msg = message(2, "jake");
         let signature = utils::sign(&privkey, &false_msg);
 
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             2,
@@ -227,7 +227,7 @@ fn minting_by_key() {
         let false_privkey = utils::random_privkey();
         let signature = utils::sign(&false_privkey, &msg);
 
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             2,
@@ -240,7 +240,7 @@ fn minting_by_key() {
 
     // properly mint
     {
-        let res = contract::mint_by_key(
+        let res = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             2,
@@ -277,13 +277,13 @@ fn minting_by_key() {
         assert_eq!(badge.current_supply, 99);
 
         // larry should be marked as already received
-        let res = contract::query_owner(deps.as_ref(), 2, "larry");
+        let res = query::owner(deps.as_ref(), 2, "larry");
         assert!(res.claimed);
     }
 
     // attempt to mint to the same user
     {
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             2,
@@ -296,7 +296,7 @@ fn minting_by_key() {
 
     // attempt to mint after expiry
     {
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             2,
@@ -311,7 +311,7 @@ fn minting_by_key() {
     {
         set_badge_supply(deps.as_mut().storage, 2, 100);
 
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             2,
@@ -333,7 +333,7 @@ fn minting_by_keys() {
 
     // wrong mint rule
     {
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
@@ -352,7 +352,7 @@ fn minting_by_keys() {
         let false_msg = message(3, "jake");
         let signature = utils::sign(&privkey, &false_msg);
 
-        let err = contract::mint_by_keys(
+        let err = execute::mint_by_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -371,7 +371,7 @@ fn minting_by_keys() {
         let false_pubkey_str = hex::encode(false_pubkey.to_bytes());
         let signature = utils::sign(&false_privkey, &msg);
 
-        let err = contract::mint_by_keys(
+        let err = execute::mint_by_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -385,7 +385,7 @@ fn minting_by_keys() {
 
     // properly mint
     {
-        let res = contract::mint_by_keys(
+        let res = execute::mint_by_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -423,11 +423,11 @@ fn minting_by_keys() {
         assert_eq!(badge.current_supply, 99);
 
         // larry should be marked as already received
-        let res = contract::query_owner(deps.as_ref(), 3, "larry");
+        let res = query::owner(deps.as_ref(), 3, "larry");
         assert!(res.claimed);
 
         // the pubkey should be removed from the whitelist
-        let res = contract::query_key(deps.as_ref(), 3, &pubkey_str);
+        let res = query::key(deps.as_ref(), 3, &pubkey_str);
         assert!(!res.whitelisted);
     }
 
@@ -436,7 +436,7 @@ fn minting_by_keys() {
         let msg = message(3, "jake");
         let signature = utils::sign(&privkey, &msg);
 
-        let err = contract::mint_by_keys(
+        let err = execute::mint_by_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -452,7 +452,7 @@ fn minting_by_keys() {
     {
         KEYS.insert(deps.as_mut().storage, (3, "larry")).unwrap();
 
-        let err = contract::mint_by_keys(
+        let err = execute::mint_by_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,
@@ -466,7 +466,7 @@ fn minting_by_keys() {
 
     // attempt to mint after expiry
     {
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             3,
@@ -481,7 +481,7 @@ fn minting_by_keys() {
     {
         set_badge_supply(deps.as_mut().storage, 3, 100);
 
-        let err = contract::mint_by_key(
+        let err = execute::mint_by_key(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             3,

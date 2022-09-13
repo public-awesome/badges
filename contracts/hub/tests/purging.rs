@@ -2,9 +2,9 @@ use cosmwasm_std::testing::{mock_dependencies,  MockApi, MockQuerier, MockStorag
 use cosmwasm_std::{attr, Addr, Empty, OwnedDeps};
 use sg_metadata::Metadata;
 
-use badge_hub::contract;
 use badge_hub::error::ContractError;
 use badge_hub::state::*;
+use badge_hub::{execute, query};
 use badges::{Badge, MintRule};
 
 mod utils;
@@ -42,7 +42,7 @@ fn purging_keys() {
 
     // cannot purge when the badge is available
     {
-        let err = contract::purge_keys(
+        let err = execute::purge_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
@@ -54,7 +54,7 @@ fn purging_keys() {
 
     // can purge once the badge becomes unavailable
     {
-        let res = contract::purge_keys(
+        let res = execute::purge_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             1,
@@ -71,13 +71,13 @@ fn purging_keys() {
             ],
         );
 
-        let res = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();
+        let res = query::keys(deps.as_ref(), 1, None, None).unwrap();
         assert_eq!(res.keys.len(), 0);
     }
 
     // purging again should result in no-op
     {
-        let res = contract::purge_keys(
+        let res = execute::purge_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             1,
@@ -102,7 +102,7 @@ fn purging_owners() {
 
     // cannot purge when the badge is available
     {
-        let err = contract::purge_owners(
+        let err = execute::purge_owners(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             1,
@@ -114,7 +114,7 @@ fn purging_owners() {
 
     // can purge once the badge becomes unavailable
     {
-        let res = contract::purge_owners(
+        let res = execute::purge_owners(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             1,
@@ -131,13 +131,13 @@ fn purging_owners() {
             ],
         );
 
-        let res = contract::query_owners(deps.as_ref(), 1, None, None).unwrap();
+        let res = query::owners(deps.as_ref(), 1, None, None).unwrap();
         assert_eq!(res.owners.len(), 0);
     }
 
     // purging again should result in no-op
     {
-        let res = contract::purge_owners(
+        let res = execute::purge_owners(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             1,

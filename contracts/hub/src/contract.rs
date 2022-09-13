@@ -1,468 +1,137 @@
-use std::collections::BTreeSet;
-
 use cosmwasm_std::{
-    to_binary, Addr, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Order, Reply, StdResult,
-    SubMsg, WasmMsg,
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult,
 };
-use cw_storage_plus::Bound;
-use sg721::{CollectionInfo, MintMsg, RoyaltyInfoResponse};
-use sg_metadata::Metadata;
 use sg_std::Response;
 
-use badges::hub::{
-    BadgeResponse, BadgesResponse, ConfigResponse, KeyResponse, KeysResponse, OwnerResponse,
-    OwnersResponse,
-};
-use badges::{Badge, MintRule};
+use badges::hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
+use badges::Badge;
 
 use crate::error::ContractError;
-use crate::fee::handle_fee;
-use crate::helpers::*;
-use crate::state::*;
+use crate::{execute, query};
 
-pub const CONTRACT_NAME: &str = "crates.io:badge-hub";
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-pub const DEFAULT_LIMIT: u32 = 10;
-pub const MAX_LIMIT: u32 = 30;
-
-pub fn init(
+#[entry_point]
+pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    nft_code_id: u64,
-    nft_info: CollectionInfo<RoyaltyInfoResponse>,
-    fee_per_byte: Decimal,
+    msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    DEVELOPER.save(deps.storage, &info.sender)?;
-    BADGE_COUNT.save(deps.storage, &0)?;
-    FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
-
-    Ok(Response::new()
-        .add_submessage(SubMsg::reply_on_success(
-            WasmMsg::Instantiate {
-                admin: Some(info.sender.to_string()),
-                code_id: nft_code_id,
-                msg: to_binary(&sg721::InstantiateMsg {
-                    name: "Badges".to_string(),
-                    symbol: "B".to_string(),
-                    minter: env.contract.address.to_string(),
-                    collection_info: nft_info,
-                })?,
-                funds: vec![],
-                label: "badge-nft".to_string(),
-            },
-            1,
-        ))
-        .add_attribute("action", "badges/hub/init")
-        .add_attribute("contract_name", CONTRACT_NAME)
-        .add_attribute("contract_version", CONTRACT_VERSION))
+    execute::init(
+        deps,
+        env,
+        info,
+        msg.nft_code_id,
+        msg.nft_info,
+        msg.fee_per_byte,
+    )
 }
 
-pub fn init_hook(deps: DepsMut, reply: Reply) -> Result<Response, ContractError> {
-    let res = cw_utils::parse_reply_instantiate_data(reply)?;
-    let nft_addr = deps.api.addr_validate(&res.contract_address)?;
-    NFT.save(deps.storage, &nft_addr)?;
-
-    Ok(Response::new()
-        .add_message(WasmMsg::Execute {
-            contract_addr: nft_addr.to_string(),
-            msg: to_binary(&sg721::ExecuteMsg::<Option<Empty>>::_Ready {})?,
-            funds: vec![],
-        })
-        .add_attribute("action", "badges/hub/init_hook")
-        .add_attribute("nft", nft_addr.to_string()))
+#[entry_point]
+pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
+    match reply.id {
+        1 => execute::init_hook(deps, reply),
+        id => Err(ContractError::InvalidReplyId(id)),
+    }
 }
 
-pub fn set_fee_rate(deps: DepsMut, fee_per_byte: Decimal) -> StdResult<Response> {
-    FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
-
-    Ok(Response::new()
-        .add_attribute("action", "badges/hub/set_fee_rate")
-        .add_attribute("fee_per_byte", fee_per_byte.to_string()))
+#[entry_point]
+pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::SetFeeRate {
+            fee_per_byte,
+        } => execute::set_fee_rate(deps, fee_per_byte),
+    }
 }
 
-pub fn create_badge(
+#[entry_point]
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    badge: Badge,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    // the badge must not have already expired or have a max supply of zero
-    assert_available(&badge, &env.block, 1)?;
-
-    // ensure the creator has paid a sufficient fee
-    let res = handle_fee(
-        deps.as_ref().storage,
-        &info,
-        None,
-        Some(&badge),
-    )?;
-
-    let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
-    BADGES.save(deps.storage, id, &badge)?;
-
-    Ok(res
-        .add_attribute("action", "badges/hub/create_badge")
-        .add_attribute("id", id.to_string())
-        .add_attribute("fee", stringify_funds(&info.funds)))
-}
-
-pub fn edit_badge(
-    deps: DepsMut,
-    info: MessageInfo,
-    id: u64,
-    metadata: Metadata,
-) -> Result<Response, ContractError> {
-    let mut badge = BADGES.load(deps.storage, id)?;
-
-    if info.sender != badge.manager {
-        return Err(ContractError::NotManager);
-    }
-
-    // ensure the manager pays a sufficient fee
-    let res = handle_fee(
-        deps.as_ref().storage,
-        &info,
-        Some(&badge.metadata),
-        &metadata,
-    )?;
-
-    badge.metadata = metadata;
-    BADGES.save(deps.storage, id, &badge)?;
-
-    Ok(res
-        .add_attribute("action", "badges/hub/edit_badge")
-        .add_attribute("id", id.to_string())
-        .add_attribute("fee", stringify_funds(&info.funds)))
-}
-
-pub fn add_keys(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    id: u64,
-    keys: BTreeSet<String>,
-) -> Result<Response, ContractError> {
-    let badge = BADGES.load(deps.storage, id)?;
-
-    // only the badge's manager can add keys
-    if info.sender != badge.manager {
-        return Err(ContractError::NotManager);
-    }
-
-    // the badge must be of "by keys" minting rule
-    match &badge.rule {
-        MintRule::ByKeys => (),
-        rule => return Err(ContractError::wrong_mint_rule("by_keys", rule)),
-    }
-
-    // ensure the manager pays a sufficient fee
-    let res = handle_fee(
-        deps.as_ref().storage,
-        &info,
-        None,
-        &keys,
-    )?;
-
-    // the minting deadline must not have been reached
-    // the max supply must not have been reached
-    assert_available(&badge, &env.block, 1)?;
-
-    // save the keys
-    keys.iter().try_for_each(|key| -> Result<_, ContractError> {
-        // key must be a of valid hex encoding
-        hex::decode(key)?;
-
-        // the key must not already exist
-        if KEYS.insert(deps.storage, (id, key))? {
-            Ok(())
-        } else {
-            Err(ContractError::key_exists(id, key))
-        }
-    })?;
-
-    Ok(res
-        .add_attribute("action", "badges/hub/add_keys")
-        .add_attribute("id", id.to_string())
-        .add_attribute("fee", stringify_funds(&info.funds))
-        .add_attribute("keys_added", keys.len().to_string()))
-}
-
-pub fn purge_keys(
-    deps: DepsMut,
-    env: Env,
-    id: u64,
-    limit: Option<u32>,
-) -> Result<Response, ContractError> {
-    let badge = BADGES.load(deps.storage, id)?;
-
-    // the badge must be of "by keys" minting rule
-    match &badge.rule {
-        MintRule::ByKeys => (),
-        rule => return Err(ContractError::wrong_mint_rule("by_keys", rule)),
-    }
-
-    // can only purge keys once the badge becomes unavailable to be minted
-    assert_unavailable(&badge, &env.block)?;
-
-    // need to collect the keys into a Vec first before creating a new iterator to delete them
-    // because of how Rust works
-    let res = query_keys(deps.as_ref(), id, None, limit)?;
-    for key in &res.keys {
-        KEYS.remove(deps.storage, (id, key));
-    };
-
-    Ok(Response::new()
-        .add_attribute("action", "badges/hub/purge_keys")
-        .add_attribute("id", id.to_string())
-        .add_attribute("keys_purged", res.keys.len().to_string()))
-}
-
-pub fn purge_owners(
-    deps: DepsMut,
-    env: Env,
-    id: u64,
-    limit: Option<u32>,
-) -> Result<Response, ContractError> {
-    let badge = BADGES.load(deps.storage, id)?;
-
-    // can only purge user data once the badge becomes unavailable to be minted
-    assert_unavailable(&badge, &env.block)?;
-
-    // need to collect the user addresses into a Vec first before creating a new iterator to delete
-    // them because of how Rust works
-    let res = query_owners(deps.as_ref(), id, None, limit)?;
-    for owner in &res.owners {
-        OWNERS.remove(deps.storage, (id, owner));
-    };
-
-    Ok(Response::new()
-        .add_attribute("action", "badges/hub/purge_owners")
-        .add_attribute("id", id.to_string())
-        .add_attribute("owners_purged", res.owners.len().to_string()))
-}
-
-pub fn mint_by_minter(
-    deps: DepsMut,
-    env: Env,
-    id: u64,
-    owners: BTreeSet<String>,
-    sender: Addr,
-) -> Result<Response, ContractError> {
-    let nft_addr = NFT.load(deps.storage)?;
-    let mut badge = BADGES.load(deps.storage, id)?;
-
-    let amount = owners.len() as u64;
-    let start_serial = badge.current_supply + 1;
-
-    assert_available(&badge, &env.block, amount)?;
-    assert_can_mint_by_minter(&badge, &sender)?;
-
-    badge.current_supply += amount;
-    BADGES.save(deps.storage, id, &badge)?;
-
-    let msgs = owners
-        .into_iter()
-        .enumerate()
-        .map(|(idx, owner)| -> StdResult<_> {
-            let serial = start_serial + (idx as u64);
-            Ok(WasmMsg::Execute {
-                contract_addr: nft_addr.to_string(),
-                msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
-                    token_id: token_id(id, serial),
-                    owner,
-                    token_uri: None,
-                    extension: None,
-                }))?,
-                funds: vec![],
-            })
-        })
-        .collect::<StdResult<Vec<_>>>()?;
-
-    Ok(Response::new()
-        .add_messages(msgs)
-        .add_attribute("action", "badges/hub/mint_by_minter")
-        .add_attribute("id", id.to_string())
-        .add_attribute("amount", amount.to_string()))
-}
-
-pub fn mint_by_key(
-    deps: DepsMut,
-    env: Env,
-    id: u64,
-    owner: String,
-    signature: String,
-) -> Result<Response, ContractError> {
-    let nft_addr = NFT.load(deps.storage)?;
-    let mut badge = BADGES.load(deps.storage, id)?;
-
-    assert_available(&badge, &env.block, 1)?;
-    assert_eligible(deps.storage, id, &owner)?;
-    assert_can_mint_by_key(deps.api, id, &badge, &owner, &signature)?;
-
-    badge.current_supply += 1;
-    BADGES.save(deps.storage, id, &badge)?;
-
-    OWNERS.insert(deps.storage, (id, &owner))?;
-
-    Ok(Response::new()
-        .add_message(WasmMsg::Execute {
-            contract_addr: nft_addr.to_string(),
-            msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
-                token_id: token_id(id, badge.current_supply),
-                // NOTE: it's possible to avoid cloning and save a liiiittle bit of gas here, simply
-                // by moving this `add_message` after the one `add_attribute` that uses `owner`.
-                // however this makes the code uglier so i don't want to do it.
-                // Stargaze has free gas price anyways (for now at least)
-                owner: owner.clone(),
-                token_uri: None,
-                extension: None,
-            }))?,
-            funds: vec![],
-        })
-        .add_attribute("action", "badges/hub/mint_by_key")
-        .add_attribute("id", id.to_string())
-        .add_attribute("serial", badge.current_supply.to_string())
-        .add_attribute("recipient", owner))
-}
-
-pub fn mint_by_keys(
-    deps: DepsMut,
-    env: Env,
-    id: u64,
-    owner: String,
-    pubkey: String,
-    signature: String,
-) -> Result<Response, ContractError> {
-    let nft_addr = NFT.load(deps.storage)?;
-    let mut badge = BADGES.load(deps.storage, id)?;
-
-    assert_available(&badge, &env.block, 1)?;
-    assert_eligible(deps.storage, id, &owner)?;
-    assert_can_mint_by_keys(deps.as_ref(), id, &badge, &owner, &pubkey, &signature)?;
-
-    badge.current_supply += 1;
-    BADGES.save(deps.storage, id, &badge)?;
-
-    KEYS.remove(deps.storage, (id, &pubkey));
-    OWNERS.insert(deps.storage, (id, &owner))?;
-
-    Ok(Response::new()
-        .add_message(WasmMsg::Execute {
-            contract_addr: nft_addr.to_string(),
-            msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
-                token_id: token_id(id, badge.current_supply),
-                owner: owner.clone(),
-                token_uri: None,
-                extension: None,
-            }))?,
-            funds: vec![],
-        })
-        .add_attribute("action", "badges/hub/mint_by_keys")
-        .add_attribute("id", id.to_string())
-        .add_attribute("serial", badge.current_supply.to_string())
-        .add_attribute("recipient", owner))
-}
-
-pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
-    let developer_addr = DEVELOPER.load(deps.storage)?;
-    let nft_addr = NFT.load(deps.storage)?;
-    let badge_count = BADGE_COUNT.load(deps.storage)?;
-    let fee_per_byte = FEE_PER_BYTE.load(deps.storage)?;
-    Ok(ConfigResponse {
-        developer: developer_addr.into(),
-        nft: nft_addr.into(),
-        badge_count,
-        fee_per_byte,
-    })
-}
-
-pub fn query_badge(deps: Deps, id: u64) -> StdResult<BadgeResponse> {
-    let badge = BADGES.load(deps.storage, id)?;
-    Ok((id, badge).into())
-}
-
-pub fn query_badges(
-    deps: Deps,
-    start_after: Option<u64>,
-    limit: Option<u32>,
-) -> StdResult<BadgesResponse> {
-    let start = start_after.map(Bound::exclusive);
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    let badges = BADGES
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|item| {
-            let (id, badge) = item?;
-            Ok((id, badge).into())
-        })
-        .collect::<StdResult<Vec<_>>>()?;
-
-    Ok(BadgesResponse {
-        badges,
-    })
-}
-
-pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> KeyResponse {
-    let key = pubkey.into();
-    let whitelisted = KEYS.contains(deps.storage, (id, &key));
-    KeyResponse {
-        key,
-        whitelisted,
+    match msg {
+        ExecuteMsg::CreateBadge {
+            manager,
+            metadata,
+            transferrable,
+            rule,
+            expiry,
+            max_supply,
+        } => {
+            let badge = Badge {
+                manager: deps.api.addr_validate(&manager)?,
+                metadata,
+                transferrable,
+                rule,
+                expiry,
+                max_supply,
+                current_supply: 0,
+            };
+            execute::create_badge(deps, env, info, badge)
+        },
+        ExecuteMsg::EditBadge {
+            id,
+            metadata,
+        } => execute::edit_badge(deps, info, id, metadata),
+        ExecuteMsg::AddKeys {
+            id,
+            keys,
+        } => execute::add_keys(deps, env, info, id, keys),
+        ExecuteMsg::PurgeKeys {
+            id,
+            limit,
+        } => execute::purge_keys(deps, env, id, limit),
+        ExecuteMsg::PurgeOwners {
+            id,
+            limit,
+        } => execute::purge_owners(deps, env, id, limit),
+        ExecuteMsg::MintByMinter {
+            id,
+            owners,
+        } => execute::mint_by_minter(deps, env, id, owners, info.sender),
+        ExecuteMsg::MintByKey {
+            id,
+            owner,
+            signature,
+        } => execute::mint_by_key(deps, env, id, owner, signature),
+        ExecuteMsg::MintByKeys {
+            id,
+            owner,
+            pubkey,
+            signature,
+        } => execute::mint_by_keys(deps, env, id, owner, pubkey, signature),
     }
 }
 
-pub fn query_keys(
-    deps: Deps,
-    id: u64,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<KeysResponse> {
-    let start = start_after.map(|key| Bound::ExclusiveRaw(key.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    let keys = KEYS
-        .prefix(id)
-        .keys(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?;
-
-    Ok(KeysResponse {
-        keys,
-    })
-}
-
-/// This function takes `impl Into<String>` instead of `String` so that i can type a few characters
-/// less in the unit tests =)
-pub fn query_owner(deps: Deps, id: u64, user: impl Into<String>) -> OwnerResponse {
-    let user = user.into();
-    let claimed = OWNERS.contains(deps.storage, (id, &user));
-    OwnerResponse {
-        user,
-        claimed,
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Config {} => to_binary(&query::config(deps)?),
+        QueryMsg::Badge {
+            id,
+        } => to_binary(&query::badge(deps, id)?),
+        QueryMsg::Badges {
+            start_after,
+            limit,
+        } => to_binary(&query::badges(deps, start_after, limit)?),
+        QueryMsg::Key {
+            id,
+            pubkey,
+        } => to_binary(&query::key(deps, id, pubkey)),
+        QueryMsg::Keys {
+            id,
+            start_after,
+            limit,
+        } => to_binary(&query::keys(deps, id, start_after, limit)?),
+        QueryMsg::Owner {
+            id,
+            user,
+        } => to_binary(&query::owner(deps, id, user)),
+        QueryMsg::Owners {
+            id,
+            start_after,
+            limit,
+        } => to_binary(&query::owners(deps, id, start_after, limit)?),
     }
-}
-
-pub fn query_owners(
-    deps: Deps,
-    id: u64,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<OwnersResponse> {
-    let start = start_after.map(|user| Bound::ExclusiveRaw(user.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    let owners = OWNERS
-        .prefix(id)
-        .keys(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?;
-
-    Ok(OwnersResponse {
-        owners,
-    })
 }

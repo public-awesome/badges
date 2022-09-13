@@ -5,9 +5,9 @@ use cosmwasm_std::{
 use prost::Message;
 use sg721::CollectionInfo;
 
-use badge_hub::contract;
 use badge_hub::error::ContractError;
 use badge_hub::state::{BADGE_COUNT, NFT};
+use badge_hub::{contract, execute};
 
 #[test]
 fn instantiating() {
@@ -21,7 +21,7 @@ fn instantiating() {
         royalty_info: None,
     };
 
-    let res = contract::init(
+    let res = execute::init(
         deps.as_mut(),
         mock_env(),
         mock_info("larry", &[]),
@@ -70,7 +70,7 @@ fn instantiating() {
 fn rejecting_invalid_reply_id() {
     let mut deps = mock_dependencies();
 
-    let err = badge_hub::entry::reply(
+    let err = contract::reply(
         deps.as_mut(),
         mock_env(),
         Reply {
@@ -97,7 +97,7 @@ struct MsgInstantiateContractResponse {
 fn running_init_hook() {
     let mut deps = mock_dependencies();
 
-    let res = contract::init_hook(
+    let res = execute::init_hook(
         deps.as_mut(),
         Reply {
             id: 1,

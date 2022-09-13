@@ -1,11 +1,11 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_info, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{attr, Addr, DepsMut, Empty, OwnedDeps, Decimal};
+use cosmwasm_std::{attr, Addr, Decimal, DepsMut, Empty, OwnedDeps};
 use sg_metadata::Metadata;
 use sg_std::Response;
 
-use badge_hub::contract;
 use badge_hub::error::ContractError;
 use badge_hub::state::*;
+use badge_hub::{execute, query};
 use badges::{Badge, MintRule};
 
 mod utils;
@@ -40,7 +40,7 @@ fn mock_badge() -> Badge {
 }
 
 fn create_badge(deps: DepsMut, badge: &Badge) -> Response {
-    contract::create_badge(
+    execute::create_badge(
         deps,
         utils::mock_env_at_timestamp(10000),
         mock_info("creator", &[]),
@@ -55,7 +55,7 @@ fn creating_unavailable_badges() {
 
     // cannot create a badge that's already expired
     {
-        let err = contract::create_badge(
+        let err = execute::create_badge(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             mock_info("creator", &[]),
@@ -70,7 +70,7 @@ fn creating_unavailable_badges() {
         let mut badge = mock_badge();
         badge.max_supply = Some(0);
 
-        let err = contract::create_badge(
+        let err = execute::create_badge(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("creator", &[]),
@@ -111,10 +111,10 @@ fn creating_badge() {
             ]
         );
 
-        let cfg = contract::query_config(deps.as_ref()).unwrap();
+        let cfg = query::config(deps.as_ref()).unwrap();
         assert_eq!(cfg.badge_count, 1);
 
-        let b = contract::query_badge(deps.as_ref(), 1).unwrap();
+        let b = query::badge(deps.as_ref(), 1).unwrap();
         assert_eq!(b, (1, badge).into());
     }
 
@@ -144,10 +144,10 @@ fn creating_badge() {
             ]
         );
 
-        let cfg = contract::query_config(deps.as_ref()).unwrap();
+        let cfg = query::config(deps.as_ref()).unwrap();
         assert_eq!(cfg.badge_count, 2);
 
-        let b = contract::query_badge(deps.as_ref(), 2).unwrap();
+        let b = query::badge(deps.as_ref(), 2).unwrap();
         assert_eq!(b, (2, badge).into());
     }
 }
@@ -161,7 +161,7 @@ fn editing_badge() {
 
     // non-manager cannot edit
     {
-        let err = contract::edit_badge(
+        let err = execute::edit_badge(
             deps.as_mut(),
             mock_info("jake", &[]),
             1,
@@ -173,7 +173,7 @@ fn editing_badge() {
 
     // manager can edit
     {
-        let res = contract::edit_badge(
+        let res = execute::edit_badge(
             deps.as_mut(),
             mock_info(badge.manager.as_str(), &[]),
             1,
@@ -190,7 +190,7 @@ fn editing_badge() {
             ],
         );
 
-        let b = contract::query_badge(deps.as_ref(), 1).unwrap();
+        let b = query::badge(deps.as_ref(), 1).unwrap();
         assert_eq!(b.metadata, Metadata::default());
     }
 }
@@ -209,7 +209,7 @@ fn adding_keys() {
 
     // non-manager cannot add key
     {
-        let err = contract::add_keys(
+        let err = execute::add_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("jake", &[]),
@@ -222,7 +222,7 @@ fn adding_keys() {
 
     // cannot add key if the badge is not of "by keys" mint rule
     {
-        let err = contract::add_keys(
+        let err = execute::add_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
@@ -235,7 +235,7 @@ fn adding_keys() {
 
     // cannot add key if the badge is no longer available
     {
-        let err = contract::add_keys(
+        let err = execute::add_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             mock_info("larry", &[]),
@@ -248,7 +248,7 @@ fn adding_keys() {
 
     // cannot add invalid hex-encoded strings
     {
-        let err = contract::add_keys(
+        let err = execute::add_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
@@ -267,7 +267,7 @@ fn adding_keys() {
 
     // manager properly adds keys
     {
-        let res = contract::add_keys(
+        let res = execute::add_keys(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
@@ -286,7 +286,7 @@ fn adding_keys() {
             ],
         );
 
-        let res = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();
+        let res = query::keys(deps.as_ref(), 1, None, None).unwrap();
         assert_eq!(res.keys, vec!["1234abcd".to_string(), "4321dcba".to_string()]);
     }
 }

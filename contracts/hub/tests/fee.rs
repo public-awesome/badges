@@ -10,8 +10,8 @@ use sg1::FeeError;
 use sg_metadata::{Metadata, Trait};
 use sg_std::{create_fund_fairburn_pool_msg, Response, NATIVE_DENOM};
 
-use badge_hub::contract::{self, add_keys};
 use badge_hub::error::ContractError;
+use badge_hub::{execute, query};
 use badge_hub::state::*;
 use badges::{Badge, MintRule};
 
@@ -76,7 +76,7 @@ fn badge_creation_fee() {
     };
 
     let mut create = |amount: u128, denom: &str| -> Result<Response, ContractError> {
-        contract::create_badge(
+        execute::create_badge(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("creator", &coins(amount, denom)),
@@ -169,7 +169,7 @@ fn badge_editing_fee() {
 
     // can't use closure here due to borrowing
     fn edit(deps: DepsMut, metadata: &Metadata, amount: u128) -> Result<Response, ContractError> {
-        contract::edit_badge(
+        execute::edit_badge(
             deps,
             mock_info("manager", &coins(amount, NATIVE_DENOM)),
             1,
@@ -248,7 +248,7 @@ fn key_adding_fee() {
         keys: &BTreeSet<String>,
         amount: u128,
     ) -> Result<Response, ContractError> {
-        add_keys(
+        execute::add_keys(
             deps,
             utils::mock_env_at_timestamp(10000),
             mock_info("manager", &coins(amount, NATIVE_DENOM)),
@@ -270,7 +270,7 @@ fn key_adding_fee() {
         let res = add(deps.as_mut(), &mock_keys_set, fee_amount).unwrap();
         assert_correct_sg1_output(&res, fee_amount);
 
-        let res = contract::query_key(deps.as_ref(), 1, &mock_keys[7]);
+        let res = query::key(deps.as_ref(), 1, &mock_keys[7]);
         assert!(res.whitelisted);
     }
 }
