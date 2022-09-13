@@ -3,12 +3,12 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 use cosmwasm_std::{Deps, Env, StdError, StdResult};
-use cw721::{AllNftInfoResponse, Cw721Query, NftInfoResponse};
+use cw721::Cw721Query;
 use sg_metadata::{Metadata, Trait};
 
 use badges::hub::BadgeResponse;
 
-use crate::msg::Extension;
+use crate::msg::{AllNftInfoResponse, Extension, NftInfoResponse};
 
 #[derive(Default)]
 pub struct NftContract<'a>(sg721_base::Sg721Contract<'a, Extension>);
@@ -40,7 +40,7 @@ impl<'a> NftContract<'a> {
         &self,
         deps: Deps,
         token_id: impl ToString,
-    ) -> StdResult<NftInfoResponse<Metadata>> {
+    ) -> StdResult<NftInfoResponse> {
         let (id, serial) = parse_token_id(&token_id.to_string())?;
         let uri = uri(id, serial);
         let badge = self.query_badge(deps, id)?;
@@ -57,7 +57,7 @@ impl<'a> NftContract<'a> {
         env: Env,
         token_id: impl ToString,
         include_expired: Option<bool>,
-    ) -> StdResult<AllNftInfoResponse<Metadata>> {
+    ) -> StdResult<AllNftInfoResponse> {
         let access = self.parent.owner_of(
             deps,
             env,
