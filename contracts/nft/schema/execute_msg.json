@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg_for_Nullable_Empty",
+  "title": "ExecuteMsg",
   "oneOf": [
     {
       "description": "Called by the minter to put a collection contract in the ready state. When ready it means the factory and minter are properly setup.",

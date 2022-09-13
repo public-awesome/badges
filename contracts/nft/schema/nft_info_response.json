@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "NftInfoResponse_for_Metadata",
+  "title": "NftInfoResponse",
   "type": "object",
   "required": [
     "extension"
