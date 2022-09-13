@@ -113,32 +113,32 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     /// The contract's configurations. Returns ConfigResponse
     Config {},
-    /// Info about a badge. Returns Badge<String>
+    /// Info about a badge. Returns BadgeResponse
     Badge {
         id: u64,
     },
-    /// Enumerate infos of all badges. Returns Vec<Badge<String>>
+    /// Enumerate infos of all badges. Returns BadgesResponse
     Badges {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
-    /// Whether a pubkey can be used to mint a badge. Returns bool
+    /// Whether a pubkey can be used to mint a badge. Returns KeyResponse
     Key {
         id: u64,
         pubkey: String,
     },
-    /// List all pubkeys that can be used to mint a badge. Returns Vec<String>
+    /// List all pubkeys that can be used to mint a badge. Returns KeysResponse
     Keys {
         id: u64,
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// Whether a user has claimed the specified badge. Returns bool
+    /// Whether a user has claimed the specified badge. Returns OwnerResponse
     Owner {
         id: u64,
-        owner: String,
+        user: String,
     },
-    /// List a users that have claimed the specified badge. Returns Vec<String>
+    /// List a users that have claimed the specified badge. Returns OwnersResponse
     Owners {
         id: u64,
         start_after: Option<String>,
@@ -185,4 +185,26 @@ impl From<(u64, Badge)> for BadgeResponse {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct BadgesResponse {
     pub badges: Vec<BadgeResponse>
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct KeyResponse {
+    pub key: String,
+    pub whitelisted: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct KeysResponse {
+    pub keys: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct OwnerResponse {
+    pub user: String,
+    pub claimed: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct OwnersResponse {
+    pub owners: Vec<String>,
 }

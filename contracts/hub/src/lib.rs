@@ -134,8 +134,8 @@ pub mod entry {
             } => to_binary(&contract::query_keys(deps, id, start_after, limit)?),
             QueryMsg::Owner {
                 id,
-                owner,
-            } => to_binary(&contract::query_owner(deps, id, owner)),
+                user,
+            } => to_binary(&contract::query_owner(deps, id, user)),
             QueryMsg::Owners {
                 id,
                 start_after,

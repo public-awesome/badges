@@ -71,8 +71,8 @@ fn purging_keys() {
             ],
         );
 
-        let keys = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();
-        assert_eq!(keys.len(), 0);
+        let res = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();
+        assert_eq!(res.keys.len(), 0);
     }
 
     // purging again should result in no-op
@@ -131,8 +131,8 @@ fn purging_owners() {
             ],
         );
 
-        let owners = contract::query_owners(deps.as_ref(), 1, None, None).unwrap();
-        assert_eq!(owners.len(), 0);
+        let res = contract::query_owners(deps.as_ref(), 1, None, None).unwrap();
+        assert_eq!(res.owners.len(), 0);
     }
 
     // purging again should result in no-op

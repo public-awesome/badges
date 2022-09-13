@@ -9,7 +9,10 @@ use sg721::{CollectionInfo, MintMsg, RoyaltyInfoResponse};
 use sg_metadata::Metadata;
 use sg_std::Response;
 
-use badges::hub::{ConfigResponse, BadgeResponse, BadgesResponse};
+use badges::hub::{
+    BadgeResponse, BadgesResponse, ConfigResponse, KeyResponse, KeysResponse, OwnerResponse,
+    OwnersResponse,
+};
 use badges::{Badge, MintRule};
 
 use crate::error::ContractError;
@@ -207,15 +210,15 @@ pub fn purge_keys(
 
     // need to collect the keys into a Vec first before creating a new iterator to delete them
     // because of how Rust works
-    let keys = query_keys(deps.as_ref(), id, None, limit)?;
-    for key in &keys {
+    let res = query_keys(deps.as_ref(), id, None, limit)?;
+    for key in &res.keys {
         KEYS.remove(deps.storage, (id, key));
     };
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/purge_keys")
         .add_attribute("id", id.to_string())
-        .add_attribute("keys_purged", keys.len().to_string()))
+        .add_attribute("keys_purged", res.keys.len().to_string()))
 }
 
 pub fn purge_owners(
@@ -231,15 +234,15 @@ pub fn purge_owners(
 
     // need to collect the user addresses into a Vec first before creating a new iterator to delete
     // them because of how Rust works
-    let owners = query_owners(deps.as_ref(), id, None, limit)?;
-    for owner in &owners {
+    let res = query_owners(deps.as_ref(), id, None, limit)?;
+    for owner in &res.owners {
         OWNERS.remove(deps.storage, (id, owner));
     };
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/purge_owners")
         .add_attribute("id", id.to_string())
-        .add_attribute("owners_purged", owners.len().to_string()))
+        .add_attribute("owners_purged", res.owners.len().to_string()))
 }
 
 pub fn mint_by_minter(
@@ -404,8 +407,13 @@ pub fn query_badges(
     })
 }
 
-pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> bool {
-    KEYS.contains(deps.storage, (id, &pubkey.into()))
+pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> KeyResponse {
+    let key = pubkey.into();
+    let whitelisted = KEYS.contains(deps.storage, (id, &key));
+    KeyResponse {
+        key,
+        whitelisted,
+    }
 }
 
 pub fn query_keys(
@@ -413,21 +421,30 @@ pub fn query_keys(
     id: u64,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<String>> {
+) -> StdResult<KeysResponse> {
     let start = start_after.map(|key| Bound::ExclusiveRaw(key.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    KEYS
+    let keys = KEYS
         .prefix(id)
         .keys(deps.storage, start, None, Order::Ascending)
         .take(limit)
-        .collect()
+        .collect::<StdResult<Vec<_>>>()?;
+
+    Ok(KeysResponse {
+        keys,
+    })
 }
 
 /// This function takes `impl Into<String>` instead of `String` so that i can type a few characters
 /// less in the unit tests =)
-pub fn query_owner(deps: Deps, id: u64, user: impl Into<String>) -> bool {
-    OWNERS.contains(deps.storage, (id, &user.into()))
+pub fn query_owner(deps: Deps, id: u64, user: impl Into<String>) -> OwnerResponse {
+    let user = user.into();
+    let claimed = OWNERS.contains(deps.storage, (id, &user));
+    OwnerResponse {
+        user,
+        claimed,
+    }
 }
 
 pub fn query_owners(
@@ -435,13 +452,17 @@ pub fn query_owners(
     id: u64,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<String>> {
+) -> StdResult<OwnersResponse> {
     let start = start_after.map(|user| Bound::ExclusiveRaw(user.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    OWNERS
+    let owners = OWNERS
         .prefix(id)
         .keys(deps.storage, start, None, Order::Ascending)
         .take(limit)
-        .collect()
+        .collect::<StdResult<Vec<_>>>()?;
+
+    Ok(OwnersResponse {
+        owners,
+    })
 }

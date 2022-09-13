@@ -270,7 +270,7 @@ fn key_adding_fee() {
         let res = add(deps.as_mut(), &mock_keys_set, fee_amount).unwrap();
         assert_correct_sg1_output(&res, fee_amount);
 
-        let whitelisted = contract::query_key(deps.as_ref(), 1, &mock_keys[7]);
-        assert!(whitelisted);
+        let res = contract::query_key(deps.as_ref(), 1, &mock_keys[7]);
+        assert!(res.whitelisted);
     }
 }

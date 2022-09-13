@@ -277,8 +277,8 @@ fn minting_by_key() {
         assert_eq!(badge.current_supply, 99);
 
         // larry should be marked as already received
-        let claimed = contract::query_owner(deps.as_ref(), 2, "larry");
-        assert!(claimed);
+        let res = contract::query_owner(deps.as_ref(), 2, "larry");
+        assert!(res.claimed);
     }
 
     // attempt to mint to the same user
@@ -423,12 +423,12 @@ fn minting_by_keys() {
         assert_eq!(badge.current_supply, 99);
 
         // larry should be marked as already received
-        let claimed = contract::query_owner(deps.as_ref(), 3, "larry");
-        assert!(claimed);
+        let res = contract::query_owner(deps.as_ref(), 3, "larry");
+        assert!(res.claimed);
 
         // the pubkey should be removed from the whitelist
-        let whitelisted = contract::query_key(deps.as_ref(), 3, &pubkey_str);
-        assert!(!whitelisted);
+        let res = contract::query_key(deps.as_ref(), 3, &pubkey_str);
+        assert!(!res.whitelisted);
     }
 
     // attempt to mint to using the same privkey again

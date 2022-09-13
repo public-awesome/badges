@@ -286,7 +286,7 @@ fn adding_keys() {
             ],
         );
 
-        let keys = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();
-        assert_eq!(keys, vec!["1234abcd".to_string(), "4321dcba".to_string()]);
+        let res = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();
+        assert_eq!(res.keys, vec!["1234abcd".to_string(), "4321dcba".to_string()]);
     }
 }
