@@ -174,12 +174,6 @@ pub fn purge_keys(
 ) -> Result<Response, ContractError> {
     let badge = BADGES.load(deps.storage, id)?;
 
-    // the badge must be of "by keys" minting rule
-    match &badge.rule {
-        MintRule::ByKeys => (),
-        rule => return Err(ContractError::wrong_mint_rule("by_keys", rule)),
-    }
-
     // can only purge keys once the badge becomes unavailable to be minted
     assert_unavailable(&badge, &env.block)?;
 
