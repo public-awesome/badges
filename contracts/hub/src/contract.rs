@@ -1,17 +1,19 @@
 use std::collections::BTreeSet;
 
 use cosmwasm_std::{
-    to_binary, Addr, Deps, DepsMut, Empty, Env, MessageInfo, Order, Reply, Response, StdResult,
+    to_binary, Addr, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Order, Reply, StdResult,
     SubMsg, WasmMsg,
 };
 use cw_storage_plus::Bound;
 use sg721::{CollectionInfo, MintMsg, RoyaltyInfoResponse};
 use sg_metadata::Metadata;
+use sg_std::Response;
 
 use badges::hub::ConfigResponse;
 use badges::{Badge, MintRule};
 
 use crate::error::ContractError;
+use crate::fee::handle_fee;
 use crate::helpers::*;
 use crate::state::*;
 
@@ -27,10 +29,13 @@ pub fn init(
     info: MessageInfo,
     nft_code_id: u64,
     nft_info: CollectionInfo<RoyaltyInfoResponse>,
+    fee_per_byte: Decimal,
 ) -> StdResult<Response> {
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    DEVELOPER.save(deps.storage, &info.sender)?;
     BADGE_COUNT.save(deps.storage, &0)?;
+    FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
 
     Ok(Response::new()
         .add_submessage(SubMsg::reply_on_success(
@@ -68,10 +73,19 @@ pub fn init_hook(deps: DepsMut, reply: Reply) -> Result<Response, ContractError>
         .add_attribute("nft", nft_addr.to_string()))
 }
 
+pub fn set_fee_rate(deps: DepsMut, fee_per_byte: Decimal) -> StdResult<Response> {
+    FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "badges/hub/set_fee_rate")
+        .add_attribute("fee_per_byte", fee_per_byte.to_string()))
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn create_badge(
     deps: DepsMut,
     env: Env,
+    info: MessageInfo,
     manager: String,
     metadata: Metadata,
     transferrable: bool,
@@ -92,39 +106,52 @@ pub fn create_badge(
         current_supply: 0,
     };
 
+    // ensure the creator has paid a sufficient fee
+    let res = handle_fee(
+        deps.as_ref().storage,
+        &info,
+        None,
+        Some(&badge),
+    )?;
+
     // the badge must not have already expired or have a max supply of zero
     assert_available(&badge, &env.block, 1)?;
 
     BADGES.save(deps.storage, id, &badge)?;
 
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "badges/hub/create_badge")
         .add_attribute("id", id.to_string())
-        .add_attribute("manager", badge.manager)
-        .add_attribute("transferrable", badge.transferrable.to_string())
-        .add_attribute("rule", badge.rule.to_string())
-        .add_attribute("expiry", stringify_option(badge.expiry))
-        .add_attribute("max_supply", stringify_option(badge.max_supply)))
+        .add_attribute("fee", stringify_funds(&info.funds)))
 }
 
 pub fn edit_badge(
     deps: DepsMut,
-    sender: Addr,
+    info: MessageInfo,
     id: u64,
     metadata: Metadata,
 ) -> Result<Response, ContractError> {
     let mut badge = BADGES.load(deps.storage, id)?;
 
-    if sender != badge.manager {
+    if info.sender != badge.manager {
         return Err(ContractError::NotManager);
     }
+
+    // ensure the manager pays a sufficient fee
+    let res = handle_fee(
+        deps.as_ref().storage,
+        &info,
+        Some(&badge.metadata),
+        &metadata,
+    )?;
 
     badge.metadata = metadata;
     BADGES.save(deps.storage, id, &badge)?;
 
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "badges/hub/edit_badge")
-        .add_attribute("id", id.to_string()))
+        .add_attribute("id", id.to_string())
+        .add_attribute("fee", stringify_funds(&info.funds)))
 }
 
 pub fn add_keys(
@@ -147,6 +174,14 @@ pub fn add_keys(
         rule => return Err(ContractError::wrong_mint_rule("by_keys", rule)),
     }
 
+    // ensure the manager pays a sufficient fee
+    let res = handle_fee(
+        deps.as_ref().storage,
+        &info,
+        None,
+        &keys,
+    )?;
+
     // the minting deadline must not have been reached
     // the max supply must not have been reached
     assert_available(&badge, &env.block, 1)?;
@@ -164,9 +199,10 @@ pub fn add_keys(
         }
     })?;
 
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "badges/hub/add_keys")
         .add_attribute("id", id.to_string())
+        .add_attribute("fee", stringify_funds(&info.funds))
         .add_attribute("keys_added", keys.len().to_string()))
 }
 
@@ -347,9 +383,15 @@ pub fn mint_by_keys(
 }
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    let developer_addr = DEVELOPER.load(deps.storage)?;
+    let nft_addr = NFT.load(deps.storage)?;
+    let badge_count = BADGE_COUNT.load(deps.storage)?;
+    let fee_per_byte = FEE_PER_BYTE.load(deps.storage)?;
     Ok(ConfigResponse {
-        nft: NFT.load(deps.storage)?.to_string(),
-        badge_count: BADGE_COUNT.load(deps.storage)?,
+        developer: developer_addr.into(),
+        nft: nft_addr.into(),
+        badge_count,
+        fee_per_byte,
     })
 }
 

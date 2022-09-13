@@ -1,6 +1,7 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_info, MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{attr, Addr, DepsMut, Empty, OwnedDeps, Response};
+use cosmwasm_std::{attr, Addr, DepsMut, Empty, OwnedDeps, Decimal};
 use sg_metadata::Metadata;
+use sg_std::Response;
 
 use badge_hub::contract;
 use badge_hub::error::ContractError;
@@ -12,8 +13,13 @@ mod utils;
 fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     let mut deps = mock_dependencies();
 
+    DEVELOPER.save(deps.as_mut().storage, &Addr::unchecked("larry")).unwrap();
     NFT.save(deps.as_mut().storage, &Addr::unchecked("nft")).unwrap();
     BADGE_COUNT.save(deps.as_mut().storage, &0).unwrap();
+
+    // here we test the creation of badges without fees
+    // fee-related logics are tested in a separate file
+    FEE_PER_BYTE.save(deps.as_mut().storage, &Decimal::zero()).unwrap();
 
     deps
 }
@@ -38,6 +44,7 @@ fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
     contract::create_badge(
         deps,
         utils::mock_env_at_timestamp(10000),
+        mock_info("creator", &[]),
         badge.manager.to_string(),
         badge.metadata.clone(),
         badge.transferrable,
@@ -57,6 +64,7 @@ fn creating_unavailable_badges() {
         let err = contract::create_badge(
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
+            mock_info("creator", &[]),
             "jake".to_string(),
             Metadata::default(),
             true,
@@ -73,6 +81,7 @@ fn creating_unavailable_badges() {
         let err = contract::create_badge(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
+            mock_info("creator", &[]),
             "jake".to_string(),
             Metadata::default(),
             true,
@@ -112,11 +121,7 @@ fn creating_badge() {
             vec![
                 attr("action", "badges/hub/create_badge"),
                 attr("id", "1"),
-                attr("manager", "larry"),
-                attr("transferrable", "true"),
-                attr("rule", "by_minter:larry"),
-                attr("expiry", "12345"),
-                attr("max_supply", "100")
+                attr("fee", ""),
             ]
         );
 
@@ -150,11 +155,7 @@ fn creating_badge() {
             vec![
                 attr("action", "badges/hub/create_badge"),
                 attr("id", "2"),
-                attr("manager", "jake"),
-                attr("transferrable", "false"),
-                attr("rule", "by_keys"),
-                attr("expiry", "undefined"),
-                attr("max_supply", "undefined")
+                attr("fee", ""),
             ]
         );
 
@@ -177,7 +178,7 @@ fn editing_badge() {
     {
         let err = contract::edit_badge(
             deps.as_mut(),
-            Addr::unchecked("jake"),
+            mock_info("jake", &[]),
             badge.id,
             Metadata::default(),
         )
@@ -189,13 +190,20 @@ fn editing_badge() {
     {
         let res = contract::edit_badge(
             deps.as_mut(),
-            badge.manager.clone(),
+            mock_info(badge.manager.as_str(), &[]),
             badge.id,
             Metadata::default(),
         )
         .unwrap();
         assert_eq!(res.messages, vec![]);
-        assert_eq!(res.attributes, vec![attr("action", "badges/hub/edit_badge"), attr("id", "1")]);
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "badges/hub/edit_badge"),
+                attr("id", "1"),
+                attr("fee", ""),
+            ],
+        );
 
         let b = contract::query_badge(deps.as_ref(), 1).unwrap();
         assert_eq!(b.metadata, Metadata::default());
@@ -285,7 +293,12 @@ fn adding_keys() {
         assert_eq!(res.messages, vec![]);
         assert_eq!(
             res.attributes,
-            vec![attr("action", "badges/hub/add_keys"), attr("id", "1"), attr("keys_added", "2"),],
+            vec![
+                attr("action", "badges/hub/add_keys"),
+                attr("id", "1"),
+                attr("fee", ""),
+                attr("keys_added", "2"),
+            ],
         );
 
         let keys = contract::query_keys(deps.as_ref(), 1, None, None).unwrap();

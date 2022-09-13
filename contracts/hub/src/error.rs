@@ -15,6 +15,9 @@ pub enum ContractError {
     ParseReply(#[from] cw_utils::ParseReplyError),
 
     #[error("{0}")]
+    Fee(#[from] sg1::FeeError),
+
+    #[error("{0}")]
     Verification(#[from] VerificationError),
 
     #[error("invalid reply id {0}; must be 1")]

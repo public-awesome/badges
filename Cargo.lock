@@ -22,7 +22,10 @@ dependencies = [
  "k256",
  "prost",
  "rand",
+ "serde",
  "sg-metadata",
+ "sg-std",
+ "sg1",
  "sg721",
  "sha2 0.10.2",
  "thiserror",
@@ -751,6 +754,19 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg1"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c38c43f055f8807ffce245f067684a65f841d7117bdda862f257291fb29ec4c1"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "serde",
+ "sg-std",
  "thiserror",
 ]
 
