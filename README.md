@@ -13,7 +13,7 @@ The Badges project consists of two smart contracts:
 
 ### Minting
 
-Creation of new badges is permissionless. There currently isn't a creation fee, but one can be added later.
+Creation of new badges is permissionless. When creating a new badge, a fee is charged based on the amount of storage space it consumes. The fee rate, defined as ustars per byte, can be set by L1 governance.
 
 Each badge defines its own minting rule. There are three such rules to be chosen from:
 

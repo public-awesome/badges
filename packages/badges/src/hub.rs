@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 
+use cosmwasm_std::Decimal;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
@@ -13,6 +14,16 @@ pub struct InstantiateMsg {
     pub nft_code_id: u64,
     /// Collection description, per SG-721 specs
     pub nft_info: CollectionInfo<RoyaltyInfoResponse>,
+    /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
+    pub fee_per_byte: Decimal,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub enum SudoMsg {
+    /// Set the fee rate for creating or editing badges. Callable by L1 governance.
+    SetFeeRate {
+        fee_per_byte: Decimal,
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -137,8 +148,12 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct ConfigResponse {
+    /// Address of the contract's developer
+    pub developer: String,
     /// Address of the Badge NFT contract
     pub nft: String,
     /// The total number of badges
     pub badge_count: u64,
+    /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
+    pub fee_per_byte: Decimal,
 }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use cosmwasm_std::{Addr, Api, BlockInfo, Deps, Storage};
+use cosmwasm_std::{Addr, Api, BlockInfo, Deps, Storage, Coin};
 use sha2::{Digest, Sha256};
 
 use badges::{Badge, MintRule};
@@ -29,6 +29,15 @@ pub fn hash(msg: &str) -> Vec<u8> {
 /// A helper function to help casting Option to String
 pub fn stringify_option(opt: Option<impl fmt::Display>) -> String {
     opt.map_or_else(|| "undefined".to_string(), |value| value.to_string())
+}
+
+/// Casting Vec<Coin> to a string
+pub fn stringify_funds(funds: &[Coin]) -> String {
+    funds
+        .iter()
+        .map(|coin| coin.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 /// This is basically a wrapper of `api.secp256k1_verify`, but instead of taking raw bytes in the

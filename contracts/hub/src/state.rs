@@ -1,11 +1,17 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Decimal};
 use cw_item_set::Set;
 use cw_storage_plus::{Item, Map};
 
 use badges::Badge;
 
+/// Address of the developer
+pub const DEVELOPER: Item<Addr> = Item::new("owner");
+
 /// Address of badge nft contract
 pub const NFT: Item<Addr> = Item::new("nft");
+
+/// The fee rate, in ustars per byte, charged for when creating or editing badges
+pub const FEE_PER_BYTE: Item<Decimal> = Item::new("fee_per_byte");
 
 /// Total number of badges
 pub const BADGE_COUNT: Item<u64> = Item::new("badge_count");

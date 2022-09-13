@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    attr, to_binary, Addr, Empty, Reply, SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
+    attr, to_binary, Addr, Decimal, Empty, Reply, SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use prost::Message;
 use sg721::CollectionInfo;
@@ -27,6 +27,7 @@ fn instantiating() {
         mock_info("larry", &[]),
         168,
         collection_info.clone(),
+        Decimal::from_ratio(10u128, 1u128),
     )
     .unwrap();
     assert_eq!(
