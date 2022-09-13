@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 use sg_metadata::Metadata;
 
-use crate::MintRule;
+use crate::{Badge, MintRule};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
@@ -148,12 +148,41 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct ConfigResponse {
-    /// Address of the contract's developer
     pub developer: String,
-    /// Address of the Badge NFT contract
     pub nft: String,
-    /// The total number of badges
     pub badge_count: u64,
-    /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
     pub fee_per_byte: Decimal,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct BadgeResponse {
+    pub id: u64,
+    pub manager: String,
+    pub metadata: Metadata,
+    pub transferrable: bool,
+    pub rule: MintRule,
+    pub expiry: Option<u64>,
+    pub max_supply: Option<u64>,
+    pub current_supply: u64,
+}
+
+impl From<(u64, Badge)> for BadgeResponse {
+    fn from(item: (u64, Badge)) -> Self {
+        let (id, badge) = item;
+        BadgeResponse {
+            id,
+            manager: badge.manager.into(),
+            metadata: badge.metadata,
+            transferrable: badge.transferrable,
+            rule: badge.rule,
+            expiry: badge.expiry,
+            max_supply: badge.max_supply,
+            current_supply: badge.current_supply,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct BadgesResponse {
+    pub badges: Vec<BadgeResponse>
 }

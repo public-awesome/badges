@@ -12,6 +12,7 @@ pub mod entry {
     use sg_std::Response;
 
     use badges::hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
+    use badges::Badge;
 
     use crate::contract;
     use crate::error::ContractError;
@@ -65,17 +66,18 @@ pub mod entry {
                 rule,
                 expiry,
                 max_supply,
-            } => contract::create_badge(
-                deps,
-                env,
-                info,
-                manager,
-                metadata,
-                transferrable,
-                rule,
-                expiry,
-                max_supply,
-            ),
+            } => {
+                let badge = Badge {
+                    manager: deps.api.addr_validate(&manager)?,
+                    metadata,
+                    transferrable,
+                    rule,
+                    expiry,
+                    max_supply,
+                    current_supply: 0,
+                };
+                contract::create_badge(deps, env, info, badge)
+            },
             ExecuteMsg::EditBadge {
                 id,
                 metadata,

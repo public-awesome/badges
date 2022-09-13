@@ -6,7 +6,7 @@ use cosmwasm_std::{Deps, Env, StdError, StdResult};
 use cw721::{AllNftInfoResponse, Cw721Query, NftInfoResponse};
 use sg_metadata::{Metadata, Trait};
 
-use badges::Badge;
+use badges::hub::BadgeResponse;
 
 use crate::msg::Extension;
 
@@ -74,7 +74,7 @@ impl<'a> NftContract<'a> {
     /// To save storage space, we save the badge's metadata at the Hub contract, instead of saving
     /// a separate copy in each token's extension. This function queries the Hub contract for the
     /// metadata of a given token id.
-    fn query_badge(&self, deps: Deps, id: u64) -> StdResult<Badge<String>> {
+    fn query_badge(&self, deps: Deps, id: u64) -> StdResult<BadgeResponse> {
         let minter = self.parent.minter(deps)?;
         deps.querier.query_wasm_smart(
             &minter.minter,

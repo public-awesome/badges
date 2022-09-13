@@ -9,7 +9,7 @@ use sg721::{CollectionInfo, MintMsg, RoyaltyInfoResponse};
 use sg_metadata::Metadata;
 use sg_std::Response;
 
-use badges::hub::ConfigResponse;
+use badges::hub::{ConfigResponse, BadgeResponse, BadgesResponse};
 use badges::{Badge, MintRule};
 
 use crate::error::ContractError;
@@ -81,30 +81,14 @@ pub fn set_fee_rate(deps: DepsMut, fee_per_byte: Decimal) -> StdResult<Response>
         .add_attribute("fee_per_byte", fee_per_byte.to_string()))
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn create_badge(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    manager: String,
-    metadata: Metadata,
-    transferrable: bool,
-    rule: MintRule,
-    expiry: Option<u64>,
-    max_supply: Option<u64>,
+    badge: Badge,
 ) -> Result<Response, ContractError> {
-    let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
-
-    let badge = Badge {
-        id,
-        manager: deps.api.addr_validate(&manager)?,
-        metadata,
-        transferrable,
-        rule,
-        expiry,
-        max_supply,
-        current_supply: 0,
-    };
+    // the badge must not have already expired or have a max supply of zero
+    assert_available(&badge, &env.block, 1)?;
 
     // ensure the creator has paid a sufficient fee
     let res = handle_fee(
@@ -114,9 +98,7 @@ pub fn create_badge(
         Some(&badge),
     )?;
 
-    // the badge must not have already expired or have a max supply of zero
-    assert_available(&badge, &env.block, 1)?;
-
+    let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
     BADGES.save(deps.storage, id, &badge)?;
 
     Ok(res
@@ -316,7 +298,7 @@ pub fn mint_by_key(
 
     assert_available(&badge, &env.block, 1)?;
     assert_eligible(deps.storage, id, &owner)?;
-    assert_can_mint_by_key(deps.api, &badge, &owner, &signature)?;
+    assert_can_mint_by_key(deps.api, id, &badge, &owner, &signature)?;
 
     badge.current_supply += 1;
     BADGES.save(deps.storage, id, &badge)?;
@@ -357,7 +339,7 @@ pub fn mint_by_keys(
 
     assert_available(&badge, &env.block, 1)?;
     assert_eligible(deps.storage, id, &owner)?;
-    assert_can_mint_by_keys(deps.as_ref(), &badge, &owner, &pubkey, &signature)?;
+    assert_can_mint_by_keys(deps.as_ref(), id, &badge, &owner, &pubkey, &signature)?;
 
     badge.current_supply += 1;
     BADGES.save(deps.storage, id, &badge)?;
@@ -395,27 +377,31 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn query_badge(deps: Deps, id: u64) -> StdResult<Badge<String>> {
+pub fn query_badge(deps: Deps, id: u64) -> StdResult<BadgeResponse> {
     let badge = BADGES.load(deps.storage, id)?;
-    Ok(badge.into())
+    Ok((id, badge).into())
 }
 
 pub fn query_badges(
     deps: Deps,
     start_after: Option<u64>,
     limit: Option<u32>,
-) -> StdResult<Vec<Badge<String>>> {
+) -> StdResult<BadgesResponse> {
     let start = start_after.map(Bound::exclusive);
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    BADGES
+    let badges = BADGES
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {
-            let (_, v) = item?;
-            Ok(v.into())
+            let (id, badge) = item?;
+            Ok((id, badge).into())
         })
-        .collect()
+        .collect::<StdResult<Vec<_>>>()?;
+
+    Ok(BadgesResponse {
+        badges,
+    })
 }
 
 pub fn query_key(deps: Deps, id: u64, pubkey: impl Into<String>) -> bool {

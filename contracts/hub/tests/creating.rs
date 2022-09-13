@@ -24,9 +24,8 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     deps
 }
 
-fn mock_badge() -> Badge<Addr> {
+fn mock_badge() -> Badge {
     Badge {
-        id: 1,
         manager: Addr::unchecked("larry"),
         metadata: Metadata {
             name: Some("first-badge".to_string()),
@@ -40,17 +39,12 @@ fn mock_badge() -> Badge<Addr> {
     }
 }
 
-fn create_badge(deps: DepsMut, badge: &Badge<Addr>) -> Response {
+fn create_badge(deps: DepsMut, badge: &Badge) -> Response {
     contract::create_badge(
         deps,
         utils::mock_env_at_timestamp(10000),
         mock_info("creator", &[]),
-        badge.manager.to_string(),
-        badge.metadata.clone(),
-        badge.transferrable,
-        badge.rule.clone(),
-        badge.expiry,
-        badge.max_supply,
+        badge.clone(),
     )
     .unwrap()
 }
@@ -65,12 +59,7 @@ fn creating_unavailable_badges() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(99999),
             mock_info("creator", &[]),
-            "jake".to_string(),
-            Metadata::default(),
-            true,
-            MintRule::ByKeys,
-            Some(12345),
-            None,
+            mock_badge(),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::Expired);
@@ -78,16 +67,14 @@ fn creating_unavailable_badges() {
 
     // cannot create a badge that has zero max supply
     {
+        let mut badge = mock_badge();
+        badge.max_supply = Some(0);
+
         let err = contract::create_badge(
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("creator", &[]),
-            "jake".to_string(),
-            Metadata::default(),
-            true,
-            MintRule::ByKeys,
-            None,
-            Some(0),
+            badge,
         )
         .unwrap_err();
         assert_eq!(err, ContractError::SoldOut);
@@ -101,7 +88,6 @@ fn creating_badge() {
     // create the first badge
     {
         let badge = Badge {
-            id: 1,
             manager: Addr::unchecked("larry"),
             metadata: Metadata {
                 name: Some("first-badge".to_string()),
@@ -129,13 +115,12 @@ fn creating_badge() {
         assert_eq!(cfg.badge_count, 1);
 
         let b = contract::query_badge(deps.as_ref(), 1).unwrap();
-        assert_eq!(b, badge.into());
+        assert_eq!(b, (1, badge).into());
     }
 
     // create the second badge
     {
         let badge = Badge {
-            id: 2,
             manager: Addr::unchecked("jake"),
             metadata: Metadata {
                 name: Some("second-badge".to_string()),
@@ -163,7 +148,7 @@ fn creating_badge() {
         assert_eq!(cfg.badge_count, 2);
 
         let b = contract::query_badge(deps.as_ref(), 2).unwrap();
-        assert_eq!(b, badge.into());
+        assert_eq!(b, (2, badge).into());
     }
 }
 
@@ -179,7 +164,7 @@ fn editing_badge() {
         let err = contract::edit_badge(
             deps.as_mut(),
             mock_info("jake", &[]),
-            badge.id,
+            1,
             Metadata::default(),
         )
         .unwrap_err();
@@ -191,7 +176,7 @@ fn editing_badge() {
         let res = contract::edit_badge(
             deps.as_mut(),
             mock_info(badge.manager.as_str(), &[]),
-            badge.id,
+            1,
             Metadata::default(),
         )
         .unwrap();

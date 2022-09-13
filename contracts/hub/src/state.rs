@@ -17,7 +17,7 @@ pub const FEE_PER_BYTE: Item<Decimal> = Item::new("fee_per_byte");
 pub const BADGE_COUNT: Item<u64> = Item::new("badge_count");
 
 /// Badges, indexed by ids
-pub const BADGES: Map<u64, Badge<Addr>> = Map::new("badges");
+pub const BADGES: Map<u64, Badge> = Map::new("badges");
 
 /// Pubkeys that are whitelisted to mint a badge
 pub const KEYS: Set<(u64, &str)> = Set::new("keys");

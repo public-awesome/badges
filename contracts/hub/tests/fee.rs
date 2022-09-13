@@ -66,7 +66,6 @@ fn badge_creation_fee() {
     let mut deps = setup_test();
 
     let mock_badge = Badge {
-        id: 1,
         manager: Addr::unchecked("manager"),
         metadata: Metadata::default(),
         transferrable: false,
@@ -81,12 +80,7 @@ fn badge_creation_fee() {
             deps.as_mut(),
             utils::mock_env_at_timestamp(10000),
             mock_info("creator", &coins(amount, denom)),
-            mock_badge.manager.clone().into(),
-            mock_badge.metadata.clone(),
-            mock_badge.transferrable,
-            mock_badge.rule.clone(),
-            mock_badge.expiry,
-            mock_badge.max_supply,
+            mock_badge.clone(),
         )
     };
 
@@ -162,7 +156,6 @@ fn badge_editing_fee() {
     };
 
     let mock_badge = Badge {
-        id: 1,
         manager: Addr::unchecked("manager"),
         metadata: old_metadata.clone(),
         transferrable: false,
@@ -223,7 +216,6 @@ fn key_adding_fee() {
     let mut deps = setup_test();
 
     let mock_badge = Badge {
-        id: 1,
         manager: Addr::unchecked("manager"),
         metadata: Metadata::default(),
         transferrable: false,

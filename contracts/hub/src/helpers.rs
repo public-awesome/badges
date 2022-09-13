@@ -62,8 +62,8 @@ pub fn assert_valid_signature(
 
 // Assert the badge is available to be minted.
 // Throw an error if the mint deadline or the max supply has been reached.
-pub fn assert_available<T>(
-    badge: &Badge<T>,
+pub fn assert_available(
+    badge: &Badge,
     block: &BlockInfo,
     amount: u64,
 ) -> Result<(), ContractError> {
@@ -83,7 +83,7 @@ pub fn assert_available<T>(
 }
 
 // Assert the badge it NOT available to be minted. Throw an error if it is available.
-pub fn assert_unavailable<T>(badge: &Badge<T>, block: &BlockInfo) -> Result<(), ContractError> {
+pub fn assert_unavailable(badge: &Badge, block: &BlockInfo) -> Result<(), ContractError> {
     match assert_available(badge, block, 1) {
         Ok(_) => Err(ContractError::Available),
         Err(_) => Ok(()),
@@ -100,7 +100,7 @@ pub fn assert_eligible(store: &dyn Storage, id: u64, user: &str) -> Result<(), C
 }
 
 /// Assert that a badge indeed uses the "by minter" rule, and that the sender is the minter.
-pub fn assert_can_mint_by_minter<T>(badge: &Badge<T>, sender: &Addr) -> Result<(), ContractError> {
+pub fn assert_can_mint_by_minter(badge: &Badge, sender: &Addr) -> Result<(), ContractError> {
     match &badge.rule {
         MintRule::ByMinter(minter) => {
             if minter != sender {
@@ -115,9 +115,10 @@ pub fn assert_can_mint_by_minter<T>(badge: &Badge<T>, sender: &Addr) -> Result<(
 
 /// Assert that a badge indeed uses the "by key" rule, and the signature was produced by signing the
 /// correct message with the correct privkey.
-pub fn assert_can_mint_by_key<T>(
+pub fn assert_can_mint_by_key(
     api: &dyn Api,
-    badge: &Badge<T>,
+    id: u64,
+    badge: &Badge,
     owner: &str,
     signature: &str,
 ) -> Result<(), ContractError> {
@@ -128,7 +129,7 @@ pub fn assert_can_mint_by_key<T>(
     };
 
     // the signature must be valid
-    let message = message(badge.id, owner);
+    let message = message(id, owner);
     assert_valid_signature(api, pubkey, &message, signature)?;
 
     Ok(())
@@ -136,9 +137,10 @@ pub fn assert_can_mint_by_key<T>(
 
 /// Assert that a badge indeed uses the "by keys" rule, and that the signature was produced by
 /// signing the correct message using a whitelisted privkey.
-pub fn assert_can_mint_by_keys<T>(
+pub fn assert_can_mint_by_keys(
     deps: Deps,
-    badge: &Badge<T>,
+    id: u64,
+    badge: &Badge,
     owner: &str,
     pubkey: &str,
     signature: &str,
@@ -150,12 +152,12 @@ pub fn assert_can_mint_by_keys<T>(
     }
 
     // the key must be whitelisted
-    if !KEYS.contains(deps.storage, (badge.id, pubkey)) {
-        return Err(ContractError::key_does_not_exist(badge.id));
+    if !KEYS.contains(deps.storage, (id, pubkey)) {
+        return Err(ContractError::key_does_not_exist(id));
     }
 
     // the signature must be valid
-    let message = message(badge.id, owner);
+    let message = message(id, owner);
     assert_valid_signature(deps.api, pubkey, &message, signature)?;
 
     Ok(())

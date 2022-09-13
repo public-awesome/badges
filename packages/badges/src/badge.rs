@@ -6,12 +6,9 @@ use sg_metadata::Metadata;
 use crate::MintRule;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct Badge<T> {
-    /// Identifier of the badge
-    pub id: u64,
+pub struct Badge {
     /// Account who has the authority to edit the badge's info.
-    /// Generic `T` is either `String` or `cosmwasm_std::Addr`.
-    pub manager: T,
+    pub manager: Addr,
     /// The badge's metadata
     pub metadata: Metadata,
     /// Whether this badge is transferrable
@@ -28,19 +25,4 @@ pub struct Badge<T> {
     /// of tokens that can ever be minted. A user burning their tokens does not make room for new
     /// tokens to be minted.
     pub current_supply: u64,
-}
-
-impl From<Badge<Addr>> for Badge<String> {
-    fn from(badge: Badge<Addr>) -> Self {
-        Badge {
-            id: badge.id,
-            manager: badge.manager.to_string(),
-            metadata: badge.metadata,
-            transferrable: badge.transferrable,
-            rule: badge.rule,
-            expiry: badge.expiry,
-            max_supply: badge.max_supply,
-            current_supply: badge.current_supply,
-        }
-    }
 }

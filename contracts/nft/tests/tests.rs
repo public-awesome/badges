@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use badge_nft::entry;
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
-use cosmwasm_std::{Empty, OwnedDeps, StdError};
+use cosmwasm_std::{Addr, Empty, OwnedDeps, StdError};
 use cw721::{AllNftInfoResponse, Cw721Query};
 use sg721::CollectionInfo;
 use sg_metadata::{Metadata, Trait};
@@ -36,27 +36,31 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
         custom_query_type: PhantomData,
     };
 
-    deps.querier.hub.set_badge(Badge {
-        id: 69,
-        manager: "larry".to_string(),
-        metadata: mock_metadata(),
-        transferrable: true,
-        rule: MintRule::ByKeys,
-        expiry: None,
-        max_supply: None,
-        current_supply: 420,
-    });
+    deps.querier.hub.set_badge(
+        69,
+        Badge {
+            manager: Addr::unchecked("larry"),
+            metadata: mock_metadata(),
+            transferrable: true,
+            rule: MintRule::ByKeys,
+            expiry: None,
+            max_supply: None,
+            current_supply: 420,
+        },
+    );
 
-    deps.querier.hub.set_badge(Badge {
-        id: 420,
-        manager: "jake".to_string(),
-        metadata: mock_metadata(),
-        transferrable: false,
-        rule: MintRule::ByKeys,
-        expiry: None,
-        max_supply: None,
-        current_supply: 88888,
-    });
+    deps.querier.hub.set_badge(
+        420,
+        Badge {
+            manager: Addr::unchecked("jake"),
+            metadata: mock_metadata(),
+            transferrable: false,
+            rule: MintRule::ByKeys,
+            expiry: None,
+            max_supply: None,
+            current_supply: 88888,
+        },
+    );
 
     let contract = NftContract::default();
 

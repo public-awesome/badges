@@ -36,7 +36,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     NFT.save(deps.as_mut().storage, &Addr::unchecked("nft")).unwrap();
 
     let default_badge = Badge {
-        id: 0,
         manager: Addr::unchecked("larry"),
         metadata: Metadata::default(),
         transferrable: true,
@@ -53,7 +52,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
             deps.as_mut().storage,
             1,
             &Badge {
-                id: 1,
                 rule: MintRule::ByMinter("larry".to_string()),
                 ..default_badge.clone()
             },
@@ -65,7 +63,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
             deps.as_mut().storage,
             2,
             &Badge {
-                id: 2,
                 rule: MintRule::ByKey(pubkey_str.clone()),
                 ..default_badge.clone()
             },
@@ -77,7 +74,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
             deps.as_mut().storage,
             3,
             &Badge {
-                id: 3,
                 rule: MintRule::ByKeys,
                 ..default_badge
             },

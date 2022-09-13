@@ -10,9 +10,8 @@ use badges::{Badge, MintRule};
 
 mod utils;
 
-fn mock_badge(rule: Option<MintRule>, expiry: Option<u64>, max_supply: Option<u64>) -> Badge<Addr> {
+fn mock_badge(rule: Option<MintRule>, expiry: Option<u64>, max_supply: Option<u64>) -> Badge {
     Badge {
-        id: 1,
         manager: Addr::unchecked("larry"),
         metadata: Metadata::default(),
         transferrable: true,
@@ -85,21 +84,20 @@ fn asserting_availability_max_supply() {
 fn asserting_eligible() {
     let mut deps = mock_dependencies();
 
-    let badge = mock_badge(None, None, None);
-
+    let id = 1;
     let user = "larry";
 
     // user has not claimed
     {
-        assert_eq!(assert_eligible(deps.as_ref().storage, badge.id, user), Ok(()));
+        assert_eq!(assert_eligible(deps.as_ref().storage, id, user), Ok(()));
     }
 
     // user has already claimed
     {
-        OWNERS.insert(deps.as_mut().storage, (badge.id, user)).unwrap();
+        OWNERS.insert(deps.as_mut().storage, (id, user)).unwrap();
         assert_eq!(
-            assert_eligible(deps.as_ref().storage, badge.id, user),
-            Err(ContractError::already_claimed(badge.id, user)),
+            assert_eligible(deps.as_ref().storage, id, user),
+            Err(ContractError::already_claimed(id, user)),
         );
     }
 }
@@ -130,23 +128,24 @@ fn asserting_can_mint_by_key() {
     let pubkey_str = hex::encode(pubkey.to_bytes());
 
     let rule = MintRule::ByKey(pubkey_str);
+    let id = 1;
     let badge = mock_badge(Some(rule), None, None);
 
     let owner = "larry";
-    let msg = message(badge.id, owner);
+    let msg = message(id, owner);
     let signature = utils::sign(&privkey, &msg);
 
     // use the correct privkey, msg, and an unused salts
     {
-        assert_eq!(assert_can_mint_by_key(deps.as_ref().api, &badge, owner, &signature), Ok(()));
+        assert_eq!(assert_can_mint_by_key(deps.as_ref().api, id, &badge, owner, &signature), Ok(()));
     }
 
     // use the correct privkey but sign the wrong message
     {
-        let false_msg = message(badge.id, "jake");
+        let false_msg = message(id, "jake");
         let signature = utils::sign(&privkey, &false_msg);
         assert_eq!(
-            assert_can_mint_by_key(deps.as_ref().api, &badge, owner, &signature),
+            assert_can_mint_by_key(deps.as_ref().api, id, &badge, owner, &signature),
             Err(ContractError::InvalidSignature),
         );
     }
@@ -156,7 +155,7 @@ fn asserting_can_mint_by_key() {
         let false_privkey = utils::random_privkey();
         let signature = utils::sign(&false_privkey, &msg);
         assert_eq!(
-            assert_can_mint_by_key(deps.as_ref().api, &badge, owner, &signature),
+            assert_can_mint_by_key(deps.as_ref().api, id, &badge, owner, &signature),
             Err(ContractError::InvalidSignature),
         );
     }
@@ -172,18 +171,19 @@ fn asserting_can_mint_by_keys() {
     let pubkey_str = hex::encode(&pubkey_bytes);
 
     let rule = MintRule::ByKeys;
+    let id = 1;
     let badge = mock_badge(Some(rule), None, None);
 
     let owner = "larry";
-    let msg = message(badge.id, owner);
+    let msg = message(id, owner);
     let signature = utils::sign(&privkey, &msg);
 
-    KEYS.insert(deps.as_mut().storage, (badge.id, &pubkey_str)).unwrap();
+    KEYS.insert(deps.as_mut().storage, (id, &pubkey_str)).unwrap();
 
     // use a whitelisted key and sign the correct message
     {
         assert_eq!(
-            assert_can_mint_by_keys(deps.as_ref(), &badge, owner, &pubkey_str, &signature),
+            assert_can_mint_by_keys(deps.as_ref(), id, &badge, owner, &pubkey_str, &signature),
             Ok(()),
         );
     }
@@ -193,7 +193,7 @@ fn asserting_can_mint_by_keys() {
         let false_msg = "ngmi";
         let signature = utils::sign(&privkey, false_msg);
         assert_eq!(
-            assert_can_mint_by_keys(deps.as_ref(), &badge, owner, &pubkey_str, &signature),
+            assert_can_mint_by_keys(deps.as_ref(), id, &badge, owner, &pubkey_str, &signature),
             Err(ContractError::InvalidSignature),
         );
     }
@@ -205,8 +205,8 @@ fn asserting_can_mint_by_keys() {
         let false_pubkey_str = hex::encode(false_pubkey.to_bytes());
         let signature = utils::sign(&false_privkey, &msg);
         assert_eq!(
-            assert_can_mint_by_keys(deps.as_ref(), &badge, owner, &false_pubkey_str, &signature),
-            Err(ContractError::key_does_not_exist(badge.id)),
+            assert_can_mint_by_keys(deps.as_ref(), id, &badge, owner, &false_pubkey_str, &signature),
+            Err(ContractError::key_does_not_exist(id)),
         );
     }
 }

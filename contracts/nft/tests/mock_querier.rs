@@ -54,7 +54,7 @@ impl Querier for CustomQuerier {
 
 pub struct HubQuerier {
     contract_addr: Addr,
-    badges: HashMap<u64, Badge<String>>,
+    badges: HashMap<u64, Badge>,
 }
 
 impl Default for HubQuerier {
@@ -67,8 +67,8 @@ impl Default for HubQuerier {
 }
 
 impl HubQuerier {
-    pub fn set_badge(&mut self, badge: Badge<String>) {
-        self.badges.insert(badge.id, badge);
+    pub fn set_badge(&mut self, id: u64, badge: Badge) {
+        self.badges.insert(id, badge);
     }
 
     pub fn handle_query(&self, contract_addr: &Addr, msg: hub::QueryMsg) -> QuerierResult {
@@ -86,8 +86,10 @@ impl HubQuerier {
                 let badge = self
                     .badges
                     .get(&id)
+                    .cloned()
                     .unwrap_or_else(|| panic!("[mock]: cannot find badge with id {}", id));
-                Ok(to_binary(badge).into()).into()
+                let res = hub::BadgeResponse::from((id, badge));
+                Ok(to_binary(&res).into()).into()
             },
 
             _ => panic!("[mock]: unsupported hub query: {:?}", msg),

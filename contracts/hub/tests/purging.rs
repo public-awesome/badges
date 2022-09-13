@@ -16,7 +16,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
         deps.as_mut().storage,
         1,
         &Badge {
-            id: 1,
             manager: Addr::unchecked("larry"),
             metadata: Metadata::default(),
             transferrable: true,
