@@ -1,0 +1,441 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "description": "Create a new badge with the specified mint rule and metadata",
+      "type": "object",
+      "required": [
+        "create_badge"
+      ],
+      "properties": {
+        "create_badge": {
+          "type": "object",
+          "required": [
+            "manager",
+            "metadata",
+            "rule",
+            "transferrable"
+          ],
+          "properties": {
+            "expiry": {
+              "description": "A deadline only before which the badge can be minted. Setting this to None means there is no deadline. Can only be set once when creating the badge; cannot be changed later.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "manager": {
+              "description": "Manager is the account that can 1) change the badge's metadata, and 2) if using the \"by keys\" mint rule, whitelist pubkeys.\n\nTODO: Make mananger an optional parameter; setting it to None meaning no one can change the metadata. Also, allow transferring of manager power in the `edit_badge` method.\n\nNOTE: If using the \"by keys\" minting rule, manager cannot be None, because a manager is is needed to whitelist keys.",
+              "type": "string"
+            },
+            "max_supply": {
+              "description": "The maximum amount of badge that can be minted. Note, users burning minted badges does NOT free up slots for new badges to be minted. Setting this to None means there is no max supply. Can only be set once when creating the badge; cannot be changed later.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "metadata": {
+              "description": "The badge's metadata, defined by the OpenSea standard",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Metadata"
+                }
+              ]
+            },
+            "rule": {
+              "description": "The rule by which this badge is to be minted. There are three available rules; see the docs of `badges::MintRule` for details.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/MintRule"
+                }
+              ]
+            },
+            "transferrable": {
+              "description": "Whether this badge is transferrable",
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Edit the metadata of an existing badge; only the manager can call",
+      "type": "object",
+      "required": [
+        "edit_badge"
+      ],
+      "properties": {
+        "edit_badge": {
+          "type": "object",
+          "required": [
+            "id",
+            "metadata"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "metadata": {
+              "$ref": "#/definitions/Metadata"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "For a badge that uses the \"by keys\" mint rule, invoke this method to whitelist pubkeys. Only callable by the manager before the minting deadline or max supply has been reached.",
+      "type": "object",
+      "required": [
+        "add_keys"
+      ],
+      "properties": {
+        "add_keys": {
+          "type": "object",
+          "required": [
+            "id",
+            "keys"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "keys": {
+              "description": "NOTE: Use BTreeSet, because the order of items in a HashSet may not be deterministic. See: https://www.reddit.com/r/rust/comments/krgvcu/is_the_iteration_order_of_hashset_deterministic/",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Once a badge has expired or sold out, the whitelisted keys are no longer needed. Invoke this method to purge these keys from storage in order to reduce the chain's state size.",
+      "type": "object",
+      "required": [
+        "purge_keys"
+      ],
+      "properties": {
+        "purge_keys": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Once a badge has expired or sold out, the list of users who have claimed it is no longer needed. Invoke this method to purge these user addresses in order to reduce the chain's state size.",
+      "type": "object",
+      "required": [
+        "purge_owners"
+      ],
+      "properties": {
+        "purge_owners": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "For a badge with the \"by minter\" mint rule, mint new badges to a set of owners. Can only be invoked by the designated minter.",
+      "type": "object",
+      "required": [
+        "mint_by_minter"
+      ],
+      "properties": {
+        "mint_by_minter": {
+          "type": "object",
+          "required": [
+            "id",
+            "owners"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "owners": {
+              "description": "NOTE: User BTreeSet instead of HashSet, the same reason as discussed above",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "For a badge with the \"by key\" mint rule, mint a badge to the specified owner. The caller must submit a signature to prove they have the minting key.",
+      "type": "object",
+      "required": [
+        "mint_by_key"
+      ],
+      "properties": {
+        "mint_by_key": {
+          "type": "object",
+          "required": [
+            "id",
+            "owner",
+            "signature"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "owner": {
+              "type": "string"
+            },
+            "signature": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "For a badge with the \"by keys\" mint rule, mint a badge to the specified owner. The caller must submit a signature to prove they have one of the whitelisted minting keys.",
+      "type": "object",
+      "required": [
+        "mint_by_keys"
+      ],
+      "properties": {
+        "mint_by_keys": {
+          "type": "object",
+          "required": [
+            "id",
+            "owner",
+            "pubkey",
+            "signature"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "owner": {
+              "type": "string"
+            },
+            "pubkey": {
+              "type": "string"
+            },
+            "signature": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "During deployment, once the NFT contract has been deployed, the developer informs Hub of the NFT contract's address.\n\nCan only be invoked once by the developer.\n\nIdeally, on a chain with permissionless contract deployment, we would have the Hub deploy the NFT contract, and get its address by parsing the reply. However, this doesn't work on chains with permissioned deployment such as Stargaze.",
+      "type": "object",
+      "required": [
+        "set_nft"
+      ],
+      "properties": {
+        "set_nft": {
+          "type": "object",
+          "required": [
+            "nft"
+          ],
+          "properties": {
+            "nft": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Metadata": {
+      "description": "OpenSea metadata standard, used by Stargaze marketplace. See [this link](https://docs.opensea.io/docs/metadata-standards) for details.",
+      "type": "object",
+      "properties": {
+        "animation_url": {
+          "description": "A URL to a multi-media attachment for the item. The file extensions GLTF, GLB, WEBM, MP4, M4V, OGV, and OGG are supported, along with the audio-only extensions MP3, WAV, and OGA.\n\nAnimation_url also supports HTML pages, allowing you to build rich experiences and interactive NFTs using JavaScript canvas, WebGL, and more. Scripts and relative paths within the HTML page are now supported. However, access to browser extensions is not supported.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attributes": {
+          "description": "These are the attributes for the item, which will show up on the OpenSea page for the item.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Trait"
+          }
+        },
+        "background_color": {
+          "description": "Background color of the item on OpenSea. Must be a six-character hexadecimal without a pre-pended #.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "description": "A human readable description of the item. Markdown is supported.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "external_url": {
+          "description": "This is the URL that will appear below the asset's image on OpenSea and will allow users to leave OpenSea and view the item on your site.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "description": "This is the URL to the image of the item. Can be just about any type of image (including SVGs, which will be cached into PNGs by OpenSea), and can be [IPFS](https://github.com/ipfs/is-ipfs) URLs or paths. We recommend using a 350 x 350 image.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image_data": {
+          "description": "Raw SVG image data, if you want to generate images on the fly (not recommended). Only use this if you're not including the `image` parameter.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Name of the item.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "youtube_url": {
+          "description": "A URL to a YouTube video.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "MintRule": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "by_keys"
+          ]
+        },
+        {
+          "description": "Badges can be minted by a designated minter account.\n\nThe minter can either be a human doing the minting manually, or a smart contract that implements custom minting rules.",
+          "type": "object",
+          "required": [
+            "by_minter"
+          ],
+          "properties": {
+            "by_minter": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Badges can be minted upon the the signature signed by a designated private key. Provide the associated public key in hex encoding.\n\nThis key can be reused as many time as possible for minting, as long as the badge's deadline and max supply have not been reached.",
+          "type": "object",
+          "required": [
+            "by_key"
+          ],
+          "properties": {
+            "by_key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Trait": {
+      "description": "An attribute of the token as defined by the [OpenSea metadata standard](https://docs.opensea.io/docs/metadata-standards#attributes).",
+      "type": "object",
+      "required": [
+        "trait_type",
+        "value"
+      ],
+      "properties": {
+        "display_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trait_type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

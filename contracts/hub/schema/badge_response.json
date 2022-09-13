@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BadgeResponse",
+  "type": "object",
+  "required": [
+    "current_supply",
+    "id",
+    "manager",
+    "metadata",
+    "rule",
+    "transferrable"
+  ],
+  "properties": {
+    "current_supply": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "expiry": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "id": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "manager": {
+      "type": "string"
+    },
+    "max_supply": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "metadata": {
+      "$ref": "#/definitions/Metadata"
+    },
+    "rule": {
+      "$ref": "#/definitions/MintRule"
+    },
+    "transferrable": {
+      "type": "boolean"
+    }
+  },
+  "definitions": {
+    "Metadata": {
+      "description": "OpenSea metadata standard, used by Stargaze marketplace. See [this link](https://docs.opensea.io/docs/metadata-standards) for details.",
+      "type": "object",
+      "properties": {
+        "animation_url": {
+          "description": "A URL to a multi-media attachment for the item. The file extensions GLTF, GLB, WEBM, MP4, M4V, OGV, and OGG are supported, along with the audio-only extensions MP3, WAV, and OGA.\n\nAnimation_url also supports HTML pages, allowing you to build rich experiences and interactive NFTs using JavaScript canvas, WebGL, and more. Scripts and relative paths within the HTML page are now supported. However, access to browser extensions is not supported.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attributes": {
+          "description": "These are the attributes for the item, which will show up on the OpenSea page for the item.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Trait"
+          }
+        },
+        "background_color": {
+          "description": "Background color of the item on OpenSea. Must be a six-character hexadecimal without a pre-pended #.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "description": "A human readable description of the item. Markdown is supported.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "external_url": {
+          "description": "This is the URL that will appear below the asset's image on OpenSea and will allow users to leave OpenSea and view the item on your site.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "description": "This is the URL to the image of the item. Can be just about any type of image (including SVGs, which will be cached into PNGs by OpenSea), and can be [IPFS](https://github.com/ipfs/is-ipfs) URLs or paths. We recommend using a 350 x 350 image.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image_data": {
+          "description": "Raw SVG image data, if you want to generate images on the fly (not recommended). Only use this if you're not including the `image` parameter.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Name of the item.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "youtube_url": {
+          "description": "A URL to a YouTube video.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "MintRule": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "by_keys"
+          ]
+        },
+        {
+          "description": "Badges can be minted by a designated minter account.\n\nThe minter can either be a human doing the minting manually, or a smart contract that implements custom minting rules.",
+          "type": "object",
+          "required": [
+            "by_minter"
+          ],
+          "properties": {
+            "by_minter": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Badges can be minted upon the the signature signed by a designated private key. Provide the associated public key in hex encoding.\n\nThis key can be reused as many time as possible for minting, as long as the badge's deadline and max supply have not been reached.",
+          "type": "object",
+          "required": [
+            "by_key"
+          ],
+          "properties": {
+            "by_key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Trait": {
+      "description": "An attribute of the token as defined by the [OpenSea metadata standard](https://docs.opensea.io/docs/metadata-standards#attributes).",
+      "type": "object",
+      "required": [
+        "trait_type",
+        "value"
+      ],
+      "properties": {
+        "display_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trait_type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

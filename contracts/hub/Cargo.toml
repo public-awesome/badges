@@ -35,6 +35,7 @@ sha2 = "0.10"
 thiserror = "1"
 
 [dev-dependencies]
+cosmwasm-schema = "1.0"
 # can't use the latest v0.11; has version conflicts of the ecdsa package
 k256 = "0.10"
 rand = "0.8"

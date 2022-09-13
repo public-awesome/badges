@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OwnersResponse",
+  "type": "object",
+  "required": [
+    "owners"
+  ],
+  "properties": {
+    "owners": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
