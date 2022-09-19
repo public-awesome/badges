@@ -3,22 +3,25 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
+    "api_url",
     "collection_info",
-    "minter",
-    "name",
-    "symbol"
+    "hub"
   ],
   "properties": {
+    "api_url": {
+      "description": "URL of an API that serves the Badges metadata. The full URL will be `${api_url}?id=${id}&serial=${serial}`",
+      "type": "string"
+    },
     "collection_info": {
-      "$ref": "#/definitions/CollectionInfo_for_RoyaltyInfoResponse"
+      "description": "SG-721 collection info",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CollectionInfo_for_RoyaltyInfoResponse"
+        }
+      ]
     },
-    "minter": {
-      "type": "string"
-    },
-    "name": {
-      "type": "string"
-    },
-    "symbol": {
+    "hub": {
+      "description": "Address of the Badges Hub contract",
       "type": "string"
     }
   },
