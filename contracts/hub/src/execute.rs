@@ -47,6 +47,11 @@ pub fn set_nft(deps: DepsMut, sender_addr: Addr, nft: &str) -> Result<Response, 
     NFT.save(deps.storage, &nft_addr)?;
 
     Ok(Response::new()
+        .add_message(WasmMsg::Execute {
+            contract_addr: nft_addr.into(),
+            msg: to_binary(&badges::nft::ExecuteMsg::_Ready {})?,
+            funds: vec![],
+        })
         .add_attribute("action", "badges/hub/set_nft")
         .add_attribute("nft", nft))
 }
