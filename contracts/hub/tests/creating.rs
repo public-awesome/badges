@@ -107,7 +107,7 @@ fn creating_badge() {
             vec![
                 attr("action", "badges/hub/create_badge"),
                 attr("id", "1"),
-                attr("fee", ""),
+                attr("fee", "[]"),
             ]
         );
 
@@ -140,7 +140,7 @@ fn creating_badge() {
             vec![
                 attr("action", "badges/hub/create_badge"),
                 attr("id", "2"),
-                attr("fee", ""),
+                attr("fee", "[]"),
             ]
         );
 
@@ -186,7 +186,7 @@ fn editing_badge() {
             vec![
                 attr("action", "badges/hub/edit_badge"),
                 attr("id", "1"),
-                attr("fee", ""),
+                attr("fee", "[]"),
             ],
         );
 
@@ -281,7 +281,7 @@ fn adding_keys() {
             vec![
                 attr("action", "badges/hub/add_keys"),
                 attr("id", "1"),
-                attr("fee", ""),
+                attr("fee", "[]"),
                 attr("keys_added", "2"),
             ],
         );
