@@ -1,29 +1,44 @@
 use std::any::type_name;
-use std::ops::Deref;
 use std::str::FromStr;
 
-use cosmwasm_std::{Deps, Env, StdError, StdResult};
+use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, StdError, StdResult, Storage};
 use cw721::Cw721Query;
 use sg_metadata::{Metadata, Trait};
+use sg_std::Response;
 
 use badges::hub::BadgeResponse;
+use badges::nft::{AllNftInfoResponse, Extension, InstantiateMsg, NftInfoResponse};
 
-use crate::msg::{AllNftInfoResponse, Extension, NftInfoResponse};
+use crate::state::API_URL;
 
 #[derive(Default)]
-pub struct NftContract<'a>(sg721_base::Sg721Contract<'a, Extension>);
-
-// Implement the Deref trait, so that we can access the parent contract's methods without explicitly
-// referencing it as `self.0`.
-impl<'a> Deref for NftContract<'a> {
-    type Target = sg721_base::Sg721Contract<'a, Extension>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+pub struct NftContract<'a> {
+    pub parent: sg721_base::Sg721Contract<'a, Extension>,
 }
 
 impl<'a> NftContract<'a> {
+    pub fn instantiate(
+        &self,
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<Response, sg721_base::ContractError> {
+        API_URL.save(deps.storage, &msg.api_url)?;
+
+        self.parent.instantiate(
+            deps,
+            env,
+            info,
+            sg721::InstantiateMsg {
+                name: "Badges".to_string(),
+                symbol: "B".to_string(),
+                minter: msg.hub,
+                collection_info: msg.collection_info,
+            },
+        )
+    }
+
     /// Assert that the badge is transferrable
     pub fn assert_transferrable(&self, deps: Deps, token_id: impl ToString) -> StdResult<()> {
         let (id, _) = parse_token_id(&token_id.to_string())?;
@@ -36,13 +51,9 @@ impl<'a> NftContract<'a> {
     }
 
     /// Overrides vanilla cw721's `nft_info` method
-    pub fn nft_info(
-        &self,
-        deps: Deps,
-        token_id: impl ToString,
-    ) -> StdResult<NftInfoResponse> {
+    pub fn nft_info(&self, deps: Deps, token_id: impl ToString) -> StdResult<NftInfoResponse> {
         let (id, serial) = parse_token_id(&token_id.to_string())?;
-        let uri = uri(id, serial);
+        let uri = uri(deps.storage, id, serial)?;
         let badge = self.query_badge(deps, id)?;
         Ok(NftInfoResponse {
             token_uri: Some(uri),
@@ -58,7 +69,7 @@ impl<'a> NftContract<'a> {
         token_id: impl ToString,
         include_expired: Option<bool>,
     ) -> StdResult<AllNftInfoResponse> {
-        let access = self.parent.owner_of(
+        let access = self.parent.parent.owner_of(
             deps,
             env,
             token_id.to_string(),
@@ -75,7 +86,7 @@ impl<'a> NftContract<'a> {
     /// a separate copy in each token's extension. This function queries the Hub contract for the
     /// metadata of a given token id.
     fn query_badge(&self, deps: Deps, id: u64) -> StdResult<BadgeResponse> {
-        let minter = self.parent.minter(deps)?;
+        let minter = self.parent.parent.minter(deps)?;
         deps.querier.query_wasm_smart(
             &minter.minter,
             &badges::hub::QueryMsg::Badge {
@@ -90,8 +101,9 @@ impl<'a> NftContract<'a> {
 /// A benefit of dynamically generating the URL instead of saving it in the contract storage is that
 /// if I later want to update the URL, I only need to change this one function, instead of changing
 /// every token's data.
-pub fn uri(id: u64, serial: u64) -> String {
-    format!("https://badges-api.larry.engineer/metadata?id={}&serial={}", id, serial)
+pub fn uri(store: &dyn Storage, id: u64, serial: u64) -> StdResult<String> {
+    let api_url = API_URL.load(store)?;
+    Ok(format!("{}?id={}&serial={}", api_url, id, serial))
 }
 
 /// Split a token id into badge id and serial number.
@@ -99,15 +111,15 @@ pub fn uri(id: u64, serial: u64) -> String {
 pub fn parse_token_id(token_id: &str) -> StdResult<(u64, u64)> {
     let split = token_id.split('|').collect::<Vec<&str>>();
     if split.len() != 2 {
-        return Err(StdError::generic_err(
-            format!("invalid token id `{}`: must be in the format {{serial}}|{{id}}", token_id),
-        ));
+        return Err(StdError::generic_err(format!(
+            "invalid token id `{}`: must be in the format {{serial}}|{{id}}",
+            token_id
+        )));
     }
 
-    let id = u64::from_str(split[0])
-        .map_err(|err| StdError::parse_err(type_name::<u64>(), err))?;
-    let serial = u64::from_str(split[1])
-        .map_err(|err| StdError::parse_err(type_name::<u64>(), err))?;
+    let id = u64::from_str(split[0]).map_err(|err| StdError::parse_err(type_name::<u64>(), err))?;
+    let serial =
+        u64::from_str(split[1]).map_err(|err| StdError::parse_err(type_name::<u64>(), err))?;
 
     Ok((id, serial))
 }

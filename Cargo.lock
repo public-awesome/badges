@@ -32,6 +32,7 @@ dependencies = [
  "badges",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus",
  "cw2",
  "cw721",
  "cw721-base",
@@ -46,9 +47,13 @@ name = "badges"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
+ "cw721",
+ "cw721-base",
  "schemars",
  "serde",
  "sg-metadata",
+ "sg721",
+ "sg721-base",
 ]
 
 [[package]]
@@ -711,7 +716,7 @@ dependencies = [
 [[package]]
 name = "sg-metadata"
 version = "0.14.0"
-source = "git+https://github.com/public-awesome/launchpad?rev=c5280ef#c5280efda42d10b4ba4947776f573229a4aa8cf0"
+source = "git+https://github.com/public-awesome/launchpad?rev=4183957#418395789d9ab13f050a2d8c0a1255aeb933a3bc"
 dependencies = [
  "schemars",
  "serde",
@@ -764,7 +769,7 @@ dependencies = [
 [[package]]
 name = "sg721-base"
 version = "0.14.0"
-source = "git+https://github.com/public-awesome/launchpad?rev=c5280ef#c5280efda42d10b4ba4947776f573229a4aa8cf0"
+source = "git+https://github.com/public-awesome/launchpad?rev=4183957#418395789d9ab13f050a2d8c0a1255aeb933a3bc"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",

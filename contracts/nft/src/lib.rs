@@ -1,5 +1,5 @@
 pub mod contract;
-pub mod msg;
+pub mod state;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -9,8 +9,9 @@ pub mod entry {
     use sg721_base::ContractError;
     use sg_std::Response;
 
+    use badges::nft::{InstantiateMsg, ExecuteMsg, QueryMsg};
+
     use crate::contract::*;
-    use crate::msg::*;
 
     #[entry_point]
     pub fn instantiate(
@@ -46,7 +47,7 @@ pub mod entry {
             } => tract.assert_transferrable(deps.as_ref(), token_id)?,
             _ => (),
         }
-        tract.execute(deps, env, info, msg)
+        tract.parent.execute(deps, env, info, msg)
     }
 
     #[entry_point]
@@ -62,7 +63,7 @@ pub mod entry {
                 token_id,
                 include_expired,
             } => to_binary(&tract.all_nft_info(deps, env, token_id, include_expired)?),
-            _ => tract.query(deps, env, msg),
+            _ => tract.parent.query(deps, env, msg),
         }
     }
 }

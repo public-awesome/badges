@@ -9,7 +9,7 @@ use sg721::CollectionInfo;
 use sg_metadata::{Metadata, Trait};
 
 use badge_nft::contract::{parse_token_id, prepend_traits, NftContract};
-use badge_nft::msg::Extension;
+use badges::nft::{ExecuteMsg, Extension, InstantiateMsg};
 use badges::{Badge, MintRule};
 
 mod mock_querier;
@@ -68,11 +68,10 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
         .instantiate(
             deps.as_mut(),
             mock_env(),
-            mock_info("hub", &[]),
-            sg721::InstantiateMsg {
-                name: "Badges".to_string(),
-                symbol: "B".to_string(),
-                minter: "hub".to_string(),
+            mock_info("larry", &[]),
+            InstantiateMsg {
+                hub: "hub".to_string(),
+                api_url: "https://badges-api.larry.engineer/metadata".to_string(),
                 collection_info: CollectionInfo {
                     creator: "larry".to_string(),
                     description: "this is a test".to_string(),
@@ -85,10 +84,12 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
         .unwrap();
 
     contract
+        .parent
         .ready(deps.as_mut(), mock_env(), mock_info("hub", &[]))
         .unwrap();
 
     contract
+        .parent
         .mint(
             deps.as_mut(),
             mock_env(),
@@ -103,6 +104,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
         .unwrap();
 
     contract
+        .parent
         .mint(
             deps.as_mut(),
             mock_env(),
@@ -174,18 +176,19 @@ fn instantiating() {
     let deps = setup_test();
     let contract = NftContract::default();
 
-    let minter = contract.parent.minter(deps.as_ref()).unwrap();
+    let minter = contract.parent.parent.minter(deps.as_ref()).unwrap();
     assert_eq!(minter.minter, "hub");
 
-    let info = contract.parent.contract_info(deps.as_ref()).unwrap();
+    let info = contract.parent.parent.contract_info(deps.as_ref()).unwrap();
     assert_eq!(info.name, "Badges");
     assert_eq!(info.symbol, "B");
 
-    let info = contract.query_collection_info(deps.as_ref()).unwrap();
+    let info = contract.parent.query_collection_info(deps.as_ref()).unwrap();
     assert_eq!(info.creator, "larry");
     assert!(info.royalty_info.is_none());
 
     let owner = contract
+        .parent
         .parent
         .owner_of(deps.as_ref(), mock_env(), "69|420".to_string(), false)
         .unwrap();
@@ -202,13 +205,14 @@ fn rejecting_transfers() {
         deps.as_mut(),
         mock_env(),
         mock_info("jake", &[]),
-        badge_nft::msg::ExecuteMsg::TransferNft {
+        ExecuteMsg::TransferNft {
             recipient: "pumpkin".to_string(),
             token_id: "69|420".to_string(),
         },
     )
     .unwrap();
     let owner = contract
+        .parent
         .parent
         .owner_of(deps.as_ref(), mock_env(), "69|420".to_string(), false)
         .unwrap();
@@ -219,7 +223,7 @@ fn rejecting_transfers() {
         deps.as_mut(),
         mock_env(),
         mock_info("pumpkin", &[]),
-        badge_nft::msg::ExecuteMsg::TransferNft {
+        ExecuteMsg::TransferNft {
             recipient: "jake".to_string(),
             token_id: "420|69".to_string(),
         },

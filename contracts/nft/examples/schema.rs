@@ -3,13 +3,11 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
-use badge_nft::msg::{AllNftInfoResponse, ExecuteMsg, InstantiateMsg, NftInfoResponse, QueryMsg};
-use cw721::{
-    ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NumTokensResponse,
-    OperatorsResponse, OwnerOfResponse, TokensResponse,
+use badges::nft::{
+    AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, CollectionInfoResponse,
+    ContractInfoResponse, ExecuteMsg, InstantiateMsg, MinterResponse, NftInfoResponse,
+    NumTokensResponse, OperatorsResponse, OwnerOfResponse, QueryMsg, TokensResponse,
 };
-use cw721_base::msg::MinterResponse;
-use sg721_base::msg::CollectionInfoResponse;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

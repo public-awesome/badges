@@ -29,7 +29,7 @@ serde = { version = "1.0", default-features = false }
 sg1 = "0.14"
 sg721 = "0.14"
 # TODO: update once published on crates.io
-sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "c5280ef" }
+sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
 sg-std = "0.14"
 sha2 = "0.10"
 thiserror = "1"

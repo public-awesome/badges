@@ -3,6 +3,7 @@
 mod badge;
 pub mod hub;
 mod mint_rule;
+pub mod nft;
 
 pub use badge::*;
 pub use mint_rule::*;
