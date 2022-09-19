@@ -31,8 +31,14 @@ pub fn stringify_option(opt: Option<impl fmt::Display>) -> String {
     opt.map_or_else(|| "undefined".to_string(), |value| value.to_string())
 }
 
-/// Casting Vec<Coin> to a string
+/// Casting Vec<Coin> to a string.
+///
+/// If there is no fund (i.e. empty Vec), return the string `[]`. This is because wasm module does
+/// not allow an empty string as event attribute.
 pub fn stringify_funds(funds: &[Coin]) -> String {
+    if funds.is_empty() {
+        return "[]".to_string();
+    }
     funds
         .iter()
         .map(|coin| coin.to_string())
