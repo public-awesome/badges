@@ -25,7 +25,7 @@ cw2 = "0.13"
 cw721 = "0.13"
 sg721 = "0.14"
 # TODO: update once published on crates.io
-sg721-base = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+sg721-base = { git = "https://github.com/public-awesome/launchpad", rev = "4183957", features = ["library"] }
 # TODO: update once published on crates.io
 sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
 sg-std = "0.14"
