@@ -5,8 +5,8 @@ authors     = ["larry <gm@larry.engineer>"]
 edition     = "2021"
 description = "Badge NFT is the implementation of SG-721 contract for the Badges project"
 readme      = "README.md"
-homepage    = "https://larry.engineer"
-repository  = "https://github.com/st4k3h0us3/badges"
+homepage    = "https://badges.fun"
+repository  = "https://github.com/steak-enjoyers/badges"
 license     = "GPL-3.0-or-later"
 keywords    = ["nft", "cosmos", "cosmwasm", "stargaze"]
 
