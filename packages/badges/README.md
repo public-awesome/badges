@@ -6,4 +6,4 @@ This crate contains Rust definition of message and response types used in Badges
 
 ## License
 
-Contents of this repository are open source under [GNU General Public License v3](https://github.com/st4k3h0us3/badges/blob/master/LICENSE) or later.
+Contents of this crate are open source under [GNU General Public License v3](https://github.com/st4k3h0us3/badges/blob/master/LICENSE) or later.

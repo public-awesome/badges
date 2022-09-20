@@ -4,4 +4,4 @@ The `badge-nft` contract is an implementation of the Stargaze's [SG-721](https:/
 
 ## License
 
-Contents of this repository are open source under [GNU General Public License v3](https://github.com/st4k3h0us3/badges/blob/master/LICENSE) or later.
+Contents of this crate are open source under [GNU General Public License v3](https://github.com/st4k3h0us3/badges/blob/master/LICENSE) or later.
