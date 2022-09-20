@@ -17,9 +17,9 @@ Creation of new badges is permissionless. When creating a new badge, a fee is ch
 
 Each badge defines its own minting rule. There are three such rules to be chosen from:
 
-* `by_minter` There is a designated minter, which can either be a human, a multisig, or another contract implementing custom minting logics. The minter can mint any amount of the badge to any user.
-* `by_key` When creating the badge, the creator generates a private-public key pair, and provides the contract with the pubkey. The creator should then distribute the privkey off-chain. Any person who receives the privkey can mint an instance of the badge by submitting the signature of [a specified message](https://github.com/st4k3h0us3/badges/blob/363ab86d19c699202c7801f2d349af924c0cefb0/contracts/hub/src/helpers.rs#L16-L19) signed by the privkey. The privkey can be used many times, whereas each user can only mint once.
-* `by_keys` Similar to the previous rule, but there are multiple privkeys, each can only be used once. Similarly, each user can only mint once.
+- `by_minter` There is a designated minter, which can either be a human, a multisig, or another contract implementing custom minting logics. The minter can mint any amount of the badge to any user.
+- `by_key` When creating the badge, the creator generates a private-public key pair, and provides the contract with the pubkey. The creator should then distribute the privkey off-chain. Any person who receives the privkey can mint an instance of the badge by submitting the signature of [a specified message](https://github.com/st4k3h0us3/badges/blob/363ab86d19c699202c7801f2d349af924c0cefb0/contracts/hub/src/helpers.rs#L16-L19) signed by the privkey. The privkey can be used many times, whereas each user can only mint once.
+- `by_keys` Similar to the previous rule, but there are multiple privkeys, each can only be used once. Similarly, each user can only mint once.
 
 Each badge can also optionally have a minting deadline and a max supply.
 
@@ -52,10 +52,10 @@ The Hub contract implements two methods, `purge_keys` and `purge_owners`, which 
 
 ### elgafar-1
 
-| Contract  | Address |
-| --------- | ------- |
-| Badge Hub | TBD     |
-| Badge NFT | TBD     |
+| Contract  | Address                                                            |
+| --------- | ------------------------------------------------------------------ |
+| Badge Hub | `stars1yqzlqv4hpumnnswannzgtkrd73lmal5lglx29j0mjed0vqudw04qc8j5ga` |
+| Badge NFT | `stars1sz5xunz3zanlpl2ldq8w74tfa37cx06hfv6tq47y9a36zzz053ss7wwhzk` |
 
 ## License
 
