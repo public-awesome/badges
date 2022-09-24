@@ -45,10 +45,10 @@ The Hub contract implements two methods, `purge_keys` and `purge_owners`, which 
 
 ### stargaze-1
 
-| Contract  | Address |
-| --------- | ------- |
-| Badge Hub | TBD     |
-| Badge NFT | TBD     |
+| Contract  | Address                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Badge Hub | [`stars13unm9tgtwq683wplupjlgw39nghm7xva7tmu7m29tmpxxnkhpkcq4gf3p4`](https://www.mintscan.io/stargaze/wasm/contract/stars13unm9tgtwq683wplupjlgw39nghm7xva7tmu7m29tmpxxnkhpkcq4gf3p4) |
+| Badge NFT | [`stars1z5qcmx9frn2y92cjy3k62gzylkezkphdwrx3675mvug3fd9l26fshdd85t`](https://www.mintscan.io/stargaze/wasm/contract/stars1z5qcmx9frn2y92cjy3k62gzylkezkphdwrx3675mvug3fd9l26fshdd85t) |
 
 ### elgafar-1
 
