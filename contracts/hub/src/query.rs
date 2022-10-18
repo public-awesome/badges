@@ -18,12 +18,12 @@ pub fn config(deps: Deps) -> StdResult<ConfigResponse> {
     let developer_addr = DEVELOPER.load(deps.storage)?;
     let nft_addr = NFT.load(deps.storage)?;
     let badge_count = BADGE_COUNT.load(deps.storage)?;
-    let fee_per_byte = FEE_PER_BYTE.load(deps.storage)?;
+    let fee_rate = FEE_RATE.load(deps.storage)?;
     Ok(ConfigResponse {
         developer: developer_addr.into(),
         nft: nft_addr.into(),
         badge_count,
-        fee_per_byte,
+        fee_rate,
     })
 }
 

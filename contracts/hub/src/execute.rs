@@ -1,10 +1,10 @@
 use std::collections::BTreeSet;
 
-use cosmwasm_std::{to_binary, Addr, Decimal, DepsMut, Empty, Env, MessageInfo, StdResult, WasmMsg};
+use cosmwasm_std::{to_binary, Addr, DepsMut, Empty, Env, MessageInfo, StdResult, WasmMsg};
 use sg721::MintMsg;
 use sg_metadata::Metadata;
 use sg_std::Response;
-use badges::{Badge, MintRule};
+use badges::{Badge, FeeRate, MintRule};
 
 use crate::error::ContractError;
 use crate::fee::handle_fee;
@@ -12,23 +12,16 @@ use crate::helpers::*;
 use crate::state::*;
 use crate::query;
 
-pub const CONTRACT_NAME: &str = "crates.io:badge-hub";
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub const DEFAULT_LIMIT: u32 = 10;
 pub const MAX_LIMIT: u32 = 30;
 
-pub fn init(deps: DepsMut, developer: Addr, fee_per_byte: Decimal) -> StdResult<Response> {
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
+pub fn init(deps: DepsMut, developer: Addr, fee_rate: FeeRate) -> StdResult<Response> {
     DEVELOPER.save(deps.storage, &developer)?;
     BADGE_COUNT.save(deps.storage, &0)?;
-    FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
+    FEE_RATE.save(deps.storage, &fee_rate)?;
 
     Ok(Response::new()
-        .add_attribute("action", "badges/hub/init")
-        .add_attribute("contract_name", CONTRACT_NAME)
-        .add_attribute("contract_version", CONTRACT_VERSION))
+        .add_attribute("action", "badges/hub/init"))
 }
 
 pub fn set_nft(deps: DepsMut, sender_addr: Addr, nft: &str) -> Result<Response, ContractError> {
@@ -56,12 +49,13 @@ pub fn set_nft(deps: DepsMut, sender_addr: Addr, nft: &str) -> Result<Response, 
         .add_attribute("nft", nft))
 }
 
-pub fn set_fee_rate(deps: DepsMut, fee_per_byte: Decimal) -> StdResult<Response> {
-    FEE_PER_BYTE.save(deps.storage, &fee_per_byte)?;
+pub fn set_fee_rate(deps: DepsMut, fee_rate: FeeRate) -> StdResult<Response> {
+    FEE_RATE.save(deps.storage, &fee_rate)?;
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/set_fee_rate")
-        .add_attribute("fee_per_byte", fee_per_byte.to_string()))
+        .add_attribute("metadata_fee_rate", fee_rate.metadata.to_string())
+        .add_attribute("key_fee_rate", fee_rate.key.to_string()))
 }
 
 pub fn create_badge(
@@ -74,11 +68,13 @@ pub fn create_badge(
     assert_available(&badge, &env.block, 1)?;
 
     // ensure the creator has paid a sufficient fee
+    let fee_rate = FEE_RATE.load(deps.storage)?;
     let res = handle_fee(
         deps.as_ref().storage,
         &info,
         None,
         Some(&badge),
+        fee_rate.metadata,
     )?;
 
     let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
@@ -103,11 +99,13 @@ pub fn edit_badge(
     }
 
     // ensure the manager pays a sufficient fee
+    let fee_rate = FEE_RATE.load(deps.storage)?;
     let res = handle_fee(
         deps.as_ref().storage,
         &info,
         Some(&badge.metadata),
         &metadata,
+        fee_rate.metadata,
     )?;
 
     badge.metadata = metadata;
@@ -140,11 +138,13 @@ pub fn add_keys(
     }
 
     // ensure the manager pays a sufficient fee
+    let fee_rate = FEE_RATE.load(deps.storage)?;
     let res = handle_fee(
         deps.as_ref().storage,
         &info,
         None,
         &keys,
+        fee_rate.key,
     )?;
 
     // the minting deadline must not have been reached

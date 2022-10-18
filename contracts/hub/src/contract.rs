@@ -1,11 +1,14 @@
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use sg_std::Response;
 
-use badges::hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
+use badges::hub::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 use badges::Badge;
 
 use crate::error::ContractError;
-use crate::{execute, query};
+use crate::{execute, query, upgrades};
+
+pub const CONTRACT_NAME: &str = "crates.io:badge-hub";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[entry_point]
 pub fn instantiate(
@@ -14,15 +17,16 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    execute::init(deps, info.sender, msg.fee_per_byte)
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    execute::init(deps, info.sender, msg.fee_rate)
 }
 
 #[entry_point]
 pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response> {
     match msg {
         SudoMsg::SetFeeRate {
-            fee_per_byte,
-        } => execute::set_fee_rate(deps, fee_per_byte),
+            fee_rate,
+        } => execute::set_fee_rate(deps, fee_rate),
     }
 }
 
@@ -120,4 +124,22 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             limit,
         } => to_binary(&query::owners(deps, id, start_after, limit)?),
     }
+}
+
+#[entry_point]
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    let cw2::ContractVersion {
+        contract,
+        version,
+    } = cw2::get_contract_version(deps.storage)?;
+
+    if contract != CONTRACT_NAME {
+        return Err(ContractError::incorrect_contract_name(CONTRACT_NAME, contract));
+    }
+
+    if version != "v1.0.0" {
+        return Err(ContractError::incorrect_contract_version(version));
+    }
+
+    upgrades::v1_1::migrate(deps, msg.fee_rate).map_err(ContractError::from)
 }

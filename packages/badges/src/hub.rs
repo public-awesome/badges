@@ -1,24 +1,29 @@
 use std::collections::BTreeSet;
 
-use cosmwasm_std::Decimal;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg_metadata::Metadata;
 
-use crate::{Badge, MintRule};
+use crate::{Badge, FeeRate, MintRule};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
     /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
-    pub fee_per_byte: Decimal,
+    pub fee_rate: FeeRate,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub enum SudoMsg {
     /// Set the fee rate for creating or editing badges. Callable by L1 governance.
     SetFeeRate {
-        fee_per_byte: Decimal,
+        fee_rate: FeeRate,
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct MigrateMsg {
+    /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
+    pub fee_rate: FeeRate,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -171,7 +176,7 @@ pub struct ConfigResponse {
     pub developer: String,
     pub nft: String,
     pub badge_count: u64,
-    pub fee_per_byte: Decimal,
+    pub fee_rate: FeeRate,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

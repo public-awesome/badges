@@ -74,6 +74,17 @@ pub enum ContractError {
         expected: String,
         found: String,
     },
+
+    #[error("incorrect contract name: expecting {expect}, found {found}")]
+    IncorrectContractName {
+        expect: String,
+        found: String,
+    },
+
+    #[error("incorrect contract version: {version}")]
+    IncorrectContractVersion {
+        version: String,
+    },
 }
 
 impl ContractError {
@@ -107,6 +118,19 @@ impl ContractError {
         ContractError::WrongMintRule {
             expected: expected.into(),
             found: found.to_string(),
+        }
+    }
+
+    pub fn incorrect_contract_name(expect: impl Into<String>, found: impl Into<String>) -> Self {
+        ContractError::IncorrectContractName {
+            expect: expect.into(),
+            found: found.into(),
+        }
+    }
+
+    pub fn incorrect_contract_version(version: impl Into<String>) -> Self {
+        ContractError::IncorrectContractVersion {
+            version: version.into(),
         }
     }
 }
