@@ -138,7 +138,7 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Co
     }
 
     if version != "v1.0.0" {
-        return Err(ContractError::incorrect_contract_version(version));
+        return Err(ContractError::incorrect_contract_version("v1.0.0", version));
     }
 
     upgrades::v1_1::migrate(deps, msg.fee_rate).map_err(ContractError::from)

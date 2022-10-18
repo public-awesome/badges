@@ -1,24 +1,23 @@
-use cosmwasm_std::{StdError, VerificationError};
 use thiserror::Error;
 
 use badges::MintRule;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
-    #[error("{0}")]
-    Std(#[from] StdError),
+    #[error(transparent)]
+    Std(#[from] cosmwasm_std::StdError),
 
-    #[error("{0}")]
-    FromHex(#[from] hex::FromHexError),
+    #[error(transparent)]
+    Verification(#[from] cosmwasm_std::VerificationError),
 
-    #[error("{0}")]
+    #[error(transparent)]
     ParseReply(#[from] cw_utils::ParseReplyError),
 
-    #[error("{0}")]
+    #[error(transparent)]
     Fee(#[from] sg1::FeeError),
 
-    #[error("{0}")]
-    Verification(#[from] VerificationError),
+    #[error(transparent)]
+    FromHex(#[from] hex::FromHexError),
 
     #[error("invalid reply id {0}; must be 1")]
     InvalidReplyId(u64),
@@ -81,9 +80,10 @@ pub enum ContractError {
         found: String,
     },
 
-    #[error("incorrect contract version: {version}")]
+    #[error("incorrect contract version: expecting {expect}, found {found}")]
     IncorrectContractVersion {
-        version: String,
+        expect: String,
+        found: String,
     },
 }
 
@@ -128,9 +128,10 @@ impl ContractError {
         }
     }
 
-    pub fn incorrect_contract_version(version: impl Into<String>) -> Self {
+    pub fn incorrect_contract_version(expect: impl Into<String>, found: impl Into<String>) -> Self {
         ContractError::IncorrectContractVersion {
-            version: version.into(),
+            expect: expect.into(),
+            found: found.into(),
         }
     }
 }
