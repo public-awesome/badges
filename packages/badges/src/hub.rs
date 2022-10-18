@@ -53,11 +53,13 @@ pub enum ExecuteMsg {
         /// Can only be set once when creating the badge; cannot be changed later.
         max_supply: Option<u64>,
     },
+
     /// Edit the metadata of an existing badge; only the manager can call
     EditBadge {
         id: u64,
         metadata: Metadata,
     },
+
     /// For a badge that uses the "by keys" mint rule, invoke this method to whitelist pubkeys.
     /// Only callable by the manager before the minting deadline or max supply has been reached.
     AddKeys {
@@ -66,12 +68,14 @@ pub enum ExecuteMsg {
         /// See: https://www.reddit.com/r/rust/comments/krgvcu/is_the_iteration_order_of_hashset_deterministic/
         keys: BTreeSet<String>,
     },
+
     /// Once a badge has expired or sold out, the whitelisted keys are no longer needed. Invoke this
     /// method to purge these keys from storage in order to reduce the chain's state size.
     PurgeKeys {
         id: u64,
         limit: Option<u32>,
     },
+
     /// Once a badge has expired or sold out, the list of users who have claimed it is no longer
     /// needed. Invoke this method to purge these user addresses in order to reduce the chain's
     /// state size.
@@ -79,6 +83,7 @@ pub enum ExecuteMsg {
         id: u64,
         limit: Option<u32>,
     },
+
     /// For a badge with the "by minter" mint rule, mint new badges to a set of owners.
     /// Can only be invoked by the designated minter.
     MintByMinter {
@@ -86,6 +91,7 @@ pub enum ExecuteMsg {
         /// NOTE: User BTreeSet instead of HashSet, the same reason as discussed above
         owners: BTreeSet<String>,
     },
+
     /// For a badge with the "by key" mint rule, mint a badge to the specified owner.
     /// The caller must submit a signature to prove they have the minting key.
     MintByKey {
@@ -93,6 +99,7 @@ pub enum ExecuteMsg {
         owner: String,
         signature: String,
     },
+
     /// For a badge with the "by keys" mint rule, mint a badge to the specified owner.
     /// The caller must submit a signature to prove they have one of the whitelisted minting keys.
     MintByKeys {
@@ -101,6 +108,7 @@ pub enum ExecuteMsg {
         pubkey: String,
         signature: String,
     },
+
     /// During deployment, once the NFT contract has been deployed, the developer informs Hub of the
     /// NFT contract's address.
     ///
@@ -119,31 +127,37 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     /// The contract's configurations. Returns ConfigResponse
     Config {},
+
     /// Info about a badge. Returns BadgeResponse
     Badge {
         id: u64,
     },
+
     /// Enumerate infos of all badges. Returns BadgesResponse
     Badges {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
+
     /// Whether a pubkey can be used to mint a badge. Returns KeyResponse
     Key {
         id: u64,
         pubkey: String,
     },
+
     /// List all pubkeys that can be used to mint a badge. Returns KeysResponse
     Keys {
         id: u64,
         start_after: Option<String>,
         limit: Option<u32>,
     },
+
     /// Whether a user has claimed the specified badge. Returns OwnerResponse
     Owner {
         id: u64,
         user: String,
     },
+
     /// List a users that have claimed the specified badge. Returns OwnersResponse
     Owners {
         id: u64,

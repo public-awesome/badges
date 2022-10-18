@@ -11,12 +11,14 @@ pub enum MintRule {
     /// The minter can either be a human doing the minting manually, or a smart contract that
     /// implements custom minting rules.
     ByMinter(String),
+
     /// Badges can be minted upon the the signature signed by a designated private key. Provide the
     /// associated public key in hex encoding.
     ///
     /// This key can be reused as many time as possible for minting, as long as the badge's deadline
     /// and max supply have not been reached.
     ByKey(String),
+
     /// Similar to the `ByKey` rule, but there are multiple pubkeys, each can only be used once.
     ///
     /// To add a pubkey, use the `add_key` execute method. Keys can only be added before the minting
