@@ -1,26 +1,23 @@
 [package]
 name        = "badges"
-version     = "1.0.0"
-authors     = ["larry <gm@larry.engineer>"]
-edition     = "2021"
 description = "Badges allows anyone to create digital badges, as rewards for participantion in events or achieving certain accomplishments"
-readme      = "README.md"
-homepage    = "https://badges.fun"
-repository  = "https://github.com/steak-enjoyers/badges"
-license     = "GPL-3.0-or-later"
-keywords    = ["nft", "cosmos", "cosmwasm", "stargaze"]
+version     = { workspace = true }
+authors     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
+keywords    = { workspace = true }
 
 [lib]
 doctest = false
 
 [dependencies]
-cosmwasm-std = "1.0"
-cw721 = "0.13"
-cw721-base = { version = "0.13", features = ["library"] }
-schemars = "0.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
-sg721 = "0.14"
-# TODO: update once published on crates.io
-sg721-base = { git = "https://github.com/public-awesome/launchpad", rev = "4183957", features = ["library"] }
-# TODO: update once published on crates.io
-sg-metadata = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+cosmwasm-std = { workspace = true }
+cw721        = { workspace = true }
+cw721-base   = { workspace = true, features = ["library"] }
+schemars     = { workspace = true }
+serde        = { workspace = true, features = ["derive"] }
+sg721        = { workspace = true }
+sg721-base   = { workspace = true, features = ["library"] }
+sg-metadata  = { workspace = true }

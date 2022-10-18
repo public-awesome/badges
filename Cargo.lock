@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "badge-hub"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "badges",
  "cosmwasm-schema",
@@ -27,7 +27,7 @@ dependencies = [
 
 [[package]]
 name = "badge-nft"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "badges",
  "cosmwasm-schema",
@@ -44,7 +44,7 @@ dependencies = [
 
 [[package]]
 name = "badges"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw721",
@@ -125,18 +125,18 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.0.0"
+version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b36e527620a2a3e00e46b6e731ab6c9b68d11069c986f7d7be8eba79ef081a4"
+checksum = "8eb69f4f7a8a4bce68c8fbd3646238fede1e77056e4ea31c5b6bfc37b709eec3"
 dependencies = [
  "syn",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.1.0"
+version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c742fc698a88cf02ea304cc2b5bc18ef975c5bb9eff93c3e44d2cd565e1d458"
+checksum = "a227cfeb9a7152b26a354b1c990e930e962f75fd68f57ab5ae2ef888c8524292"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -147,9 +147,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.1.0"
+version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88a7c4c07be11add09dd3af3064c4f4cbc2dc99c6859129bdaf820131730e996"
+checksum = "3626cb42eef870de67f791e873711255325224d86f281bf628c42abd295f3a14"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -232,9 +232,9 @@ dependencies = [
 
 [[package]]
 name = "curve25519-dalek"
-version = "3.2.1"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90f9d052967f590a76e62eb387bd0bbb1b000182c3cefe5364db6b7211651bc0"
+checksum = "0b9fdf9972b2bd6af2d913799d9ebc165ea4d2e65878e329d9c6b372c4491b61"
 dependencies = [
  "byteorder",
  "digest 0.9.0",
@@ -740,8 +740,7 @@ dependencies = [
 [[package]]
 name = "sg1"
 version = "0.14.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c38c43f055f8807ffce245f067684a65f841d7117bdda862f257291fb29ec4c1"
+source = "git+https://github.com/public-awesome/launchpad?rev=4183957#418395789d9ab13f050a2d8c0a1255aeb933a3bc"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -958,6 +957,6 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "zeroize"
-version = "1.3.0"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4756f7db3f7b5574938c3eb1c117038b8e07f95ee6718c0efad4ac21508f1efd"
+checksum = "c394b5bd0c6f669e7275d9c20aa90ae064cb22e75a1cad54e1b34088034b149f"

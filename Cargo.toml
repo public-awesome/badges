@@ -1,6 +1,31 @@
 [workspace]
 members = ["contracts/*", "packages/*"]
 
+[workspace.package]
+version    = "1.1.0"
+authors    = ["larry <gm@larry.engineer>"]
+edition    = "2021"
+homepage   = "https://badges.fun"
+repository = "https://github.com/steak-enjoyers/badges"
+license    = "GPL-3.0-or-later"
+keywords   = ["nft", "cosmos", "cosmwasm", "stargaze"]
+
+[workspace.dependencies]
+cosmwasm-schema = "1.0"
+cosmwasm-std    = "1.0"
+cw2             = "0.13"
+cw721           = "0.13"
+cw721-base      = "0.13"
+cw-storage-plus = "0.13"
+cw-utils        = "0.13"
+schemars        = "0.8"
+serde           = { version = "1.0", default-features = false }
+sg1             = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+sg721           = "0.14"
+sg721-base      = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+sg-metadata     = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+sg-std          = "0.14"
+
 [profile.release.package.badge-hub]
 codegen-units = 1
 incremental = false
