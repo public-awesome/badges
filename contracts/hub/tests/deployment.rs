@@ -1,6 +1,8 @@
 use cosmwasm_std::testing::{mock_dependencies};
 use cosmwasm_std::{attr, Addr, Decimal, SubMsg, WasmMsg, to_binary};
 
+use badges::FeeRate;
+
 use badge_hub::error::ContractError;
 use badge_hub::state::{BADGE_COUNT, NFT, DEVELOPER};
 use badge_hub::execute;
@@ -12,25 +14,17 @@ fn instantiating() {
     let res = execute::init(
         deps.as_mut(),
         Addr::unchecked("larry"),
-        Decimal::from_ratio(10u128, 1u128),
+        FeeRate {
+            metadata: Decimal::from_ratio(10u128, 1u128),
+            key: Decimal::from_ratio(2u128, 1u128),
+        },
     )
     .unwrap();
     assert_eq!(res.messages, vec![]);
-    assert_eq!(
-        res.attributes,
-        vec![
-            attr("action", "badges/hub/init"),
-            attr("contract_name", "crates.io:badge-hub"),
-            attr("contract_version", env!("CARGO_PKG_VERSION"))
-        ]
-    );
+    assert_eq!(res.attributes, vec![attr("action", "badges/hub/init")]);
 
     let badge_count = BADGE_COUNT.load(deps.as_ref().storage).unwrap();
     assert_eq!(badge_count, 0);
-
-    let version = cw2::get_contract_version(deps.as_ref().storage).unwrap();
-    assert_eq!(version.contract, "crates.io:badge-hub");
-    assert_eq!(version.version, env!("CARGO_PKG_VERSION"));
 }
 
 #[test]

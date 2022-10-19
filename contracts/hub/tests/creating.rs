@@ -6,7 +6,7 @@ use sg_std::Response;
 use badge_hub::error::ContractError;
 use badge_hub::state::*;
 use badge_hub::{execute, query};
-use badges::{Badge, MintRule};
+use badges::{Badge, MintRule, FeeRate};
 
 mod utils;
 
@@ -19,7 +19,15 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
 
     // here we test the creation of badges without fees
     // fee-related logics are tested in a separate file
-    FEE_PER_BYTE.save(deps.as_mut().storage, &Decimal::zero()).unwrap();
+    FEE_RATE
+        .save(
+            deps.as_mut().storage,
+            &FeeRate {
+                metadata: Decimal::zero(),
+                key: Decimal::zero(),
+            },
+        )
+        .unwrap();
 
     deps
 }

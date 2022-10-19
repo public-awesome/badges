@@ -13,13 +13,16 @@ use sg_std::{create_fund_fairburn_pool_msg, Response, NATIVE_DENOM};
 use badge_hub::error::ContractError;
 use badge_hub::{execute, query};
 use badge_hub::state::*;
-use badges::{Badge, MintRule};
+use badges::{Badge, MintRule, FeeRate};
 
 mod utils;
 
 // 10 ustars per bytes
-fn mock_fee_per_byte() -> Decimal {
-    Decimal::from_ratio(10u128, 1u128)
+fn mock_fee_rate() -> FeeRate {
+    FeeRate {
+        metadata: Decimal::from_ratio(10u128, 1u128),
+        key: Decimal::from_ratio(2u128, 1u128),
+    }
 }
 
 fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
@@ -28,7 +31,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     DEVELOPER.save(deps.as_mut().storage, &Addr::unchecked("larry")).unwrap();
     NFT.save(deps.as_mut().storage, &Addr::unchecked("nft")).unwrap();
     BADGE_COUNT.save(deps.as_mut().storage, &0).unwrap();
-    FEE_PER_BYTE.save(deps.as_mut().storage, &mock_fee_per_byte()).unwrap();
+    FEE_RATE.save(deps.as_mut().storage, &mock_fee_rate()).unwrap();
 
     deps
 }
@@ -85,7 +88,7 @@ fn badge_creation_fee() {
     };
 
     let bytes = to_binary(&mock_badge).unwrap();
-    let fee_amount = (Uint128::from(bytes.len() as u128) * mock_fee_per_byte()).u128();
+    let fee_amount = (Uint128::from(bytes.len() as u128) * mock_fee_rate().metadata).u128();
 
     // try create without sending a fee, should fail
     {
@@ -194,7 +197,7 @@ fn badge_editing_fee() {
     // calculate the expected fee amount
     let old_bytes = to_binary(&old_metadata).unwrap().len() as u128;
     let new_bytes = to_binary(&new_metadata).unwrap().len() as u128;
-    let fee_amount = (Uint128::new(new_bytes - old_bytes) * mock_fee_per_byte()).u128();
+    let fee_amount = (Uint128::new(new_bytes - old_bytes) * mock_fee_rate().metadata).u128();
 
     // not sending sufficient fee, should fail
     {
@@ -241,7 +244,7 @@ fn key_adding_fee() {
         .collect::<BTreeSet<_>>();
 
     let bytes = to_binary(&mock_keys).unwrap().len() as u128;
-    let fee_amount = (Uint128::new(bytes) * mock_fee_per_byte()).u128();
+    let fee_amount = (Uint128::new(bytes) * mock_fee_rate().key).u128();
 
     fn add(
         deps: DepsMut,
