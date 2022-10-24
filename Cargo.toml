@@ -20,10 +20,11 @@ cw-storage-plus = "0.13"
 cw-utils        = "0.13"
 schemars        = "0.8"
 serde           = { version = "1.0", default-features = false }
-sg1             = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+sg1             = "0.14"
 sg721           = "0.14"
+# Stargaze team forgot to upload sg721-base v0.14 to crates.io
 sg721-base      = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
-sg-metadata     = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
+sg-metadata     = "0.14"
 sg-std          = "0.14"
 
 [profile.release.package.badge-hub]
