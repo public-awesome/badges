@@ -8,12 +8,22 @@ use crate::state::{BADGES, FEE_RATE};
 
 const LEGACY_FEE_PER_BYTE: Item<Decimal> = Item::new("fee_per_byte");
 
-/// Date and time (GMT): Wednesday, November 30, 2022 11:59:59 PM
-const NEW_BADGE_3_EXPIRY: u64 = 1669852799;
+/// Date and time (GMT): Wednesday, December 31, 2022 11:59:59 PM
+const NEW_BADGE_3_EXPIRY: u64 = 1672531199;
 
-pub fn migrate(deps: DepsMut, fee_rate: FeeRate) -> StdResult<Response> {
+/// This is the new fee rate that will be updated to
+fn new_fee_rate() -> FeeRate {
+    FeeRate {
+        metadata: Decimal::from_ratio(200000u128, 1u128),
+        key: Decimal::from_ratio(10000u128, 1u128),
+    }
+}
+
+pub fn migrate(deps: DepsMut) -> StdResult<Response> {
+    let new_fee_rate = new_fee_rate();
+
     // set separate fee rates for metadata and keys
-    update_fee_rate(deps.storage, &fee_rate)?;
+    update_fee_rate(deps.storage, &new_fee_rate)?;
 
     // extend the minting deadline for badge 3
     update_badge_3_expiry(deps.storage)?;
@@ -22,8 +32,8 @@ pub fn migrate(deps: DepsMut, fee_rate: FeeRate) -> StdResult<Response> {
         .add_attribute("action", "badges/hub/migrate")
         .add_attribute("from_version", "1.0.0")
         .add_attribute("to_version", "1.1.0")
-        .add_attribute("metadata_fee_rate", fee_rate.metadata.to_string())
-        .add_attribute("key_fee_rate", fee_rate.key.to_string()))
+        .add_attribute("metadata_fee_rate", new_fee_rate.metadata.to_string())
+        .add_attribute("key_fee_rate", new_fee_rate.key.to_string()))
 }
 
 fn update_fee_rate(store: &mut dyn Storage, fee_rate: &FeeRate) -> StdResult<()> {

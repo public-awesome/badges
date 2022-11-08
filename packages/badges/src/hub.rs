@@ -21,12 +21,6 @@ pub enum SudoMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct MigrateMsg {
-    /// The fee rate charged for when creating or editing badges, quoted in ustars per byte
-    pub fee_rate: FeeRate,
-}
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 #[allow(clippy::large_enum_variant)]
 pub enum ExecuteMsg {

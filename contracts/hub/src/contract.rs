@@ -1,7 +1,9 @@
-use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult,
+};
 use sg_std::Response;
 
-use badges::hub::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
+use badges::hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use badges::Badge;
 
 use crate::error::ContractError;
@@ -127,7 +129,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 #[entry_point]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let cw2::ContractVersion {
         contract,
         version,
@@ -137,9 +139,9 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Co
         return Err(ContractError::incorrect_contract_name(CONTRACT_NAME, contract));
     }
 
-    if version != "v1.0.0" {
-        return Err(ContractError::incorrect_contract_version("v1.0.0", version));
+    if version != "1.0.0" {
+        return Err(ContractError::incorrect_contract_version("1.0.0", version));
     }
 
-    upgrades::v1_1::migrate(deps, msg.fee_rate).map_err(ContractError::from)
+    upgrades::v1_1::migrate(deps).map_err(ContractError::from)
 }

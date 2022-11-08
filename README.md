@@ -54,8 +54,8 @@ The Hub contract implements two methods, `purge_keys` and `purge_owners`, which 
 
 | Contract  | Address                                                            |
 | --------- | ------------------------------------------------------------------ |
-| Badge Hub | `stars1yqzlqv4hpumnnswannzgtkrd73lmal5lglx29j0mjed0vqudw04qc8j5ga` |
-| Badge NFT | `stars1sz5xunz3zanlpl2ldq8w74tfa37cx06hfv6tq47y9a36zzz053ss7wwhzk` |
+| Badge Hub | `stars1dacun0xn7z73qzdcmq27q3xn6xuprg8e2ugj364784al2v27tklqynhuqa` |
+| Badge NFT | `stars1vlw4y54dyzt3zg7phj8yey9fg4zj49czknssngwmgrnwymyktztstalg7t` |
 
 ## License
 
