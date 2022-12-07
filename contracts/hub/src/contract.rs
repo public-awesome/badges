@@ -139,9 +139,11 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
         return Err(ContractError::incorrect_contract_name(CONTRACT_NAME, contract));
     }
 
+    // in the previous v1.1 update, we forgot to set the contract version to 1.1
+    // so for now it's still 1.0.0
     if version != "1.0.0" {
         return Err(ContractError::incorrect_contract_version("1.0.0", version));
     }
 
-    upgrades::v1_1::migrate(deps).map_err(ContractError::from)
+    upgrades::v1_2::migrate(deps).map_err(ContractError::from)
 }
