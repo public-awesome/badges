@@ -16,8 +16,11 @@ cosmwasm-std    = "1.0"
 cw2             = "0.13"
 cw721           = "0.13"
 cw721-base      = "0.13"
+cw-item-set     = "0.4"
 cw-storage-plus = "0.13"
 cw-utils        = "0.13"
+hex             = "0.4"
+k256            = "0.10"
 schemars        = "0.8"
 serde           = { version = "1.0", default-features = false }
 sg1             = "0.14"
@@ -26,6 +29,8 @@ sg721           = "0.14"
 sg721-base      = { git = "https://github.com/public-awesome/launchpad", rev = "4183957" }
 sg-metadata     = "0.14"
 sg-std          = "0.14"
+sha2            = "0.10"
+thiserror       = "1"
 
 [profile.release.package.badge-hub]
 codegen-units = 1
