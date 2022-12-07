@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "badge-hub"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "badges",
  "cosmwasm-schema",
@@ -27,7 +27,7 @@ dependencies = [
 
 [[package]]
 name = "badge-nft"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "badges",
  "cosmwasm-schema",
@@ -44,7 +44,7 @@ dependencies = [
 
 [[package]]
 name = "badges"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "cosmwasm-std",
  "cw721",
