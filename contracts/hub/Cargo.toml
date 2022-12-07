@@ -14,7 +14,10 @@ crate-type = ["cdylib", "rlib"]
 doctest    = false
 
 [features]
+default = ["v1_2"]
 library = []
+v1_1 = []
+v1_2 = []
 
 [dependencies]
 badges          = { path = "../../packages/badges" }
@@ -35,5 +38,4 @@ sha2            = "0.10"
 thiserror       = "1"
 
 [dev-dependencies]
-k256 = "0.10"
 rand = "0.8"
