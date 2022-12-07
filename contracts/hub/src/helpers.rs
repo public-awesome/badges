@@ -1,7 +1,6 @@
 use std::fmt;
 
 use cosmwasm_std::{Addr, Api, BlockInfo, Deps, Storage, Coin};
-use k256::ecdsa::VerifyingKey;
 use sha2::{Digest, Sha256};
 
 use badges::{Badge, MintRule};
@@ -10,6 +9,11 @@ use crate::{
     error::ContractError,
     state::{KEYS, OWNERS},
 };
+
+/// Length of a serialized compressed public key
+const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
+/// Length of a serialized uncompressed public key
+const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 
 /// Each NFT's token id is simply the badge id and the serial separated by a pipe.
 pub fn token_id(id: u64, serial: u64) -> String {
@@ -173,8 +177,21 @@ pub fn assert_can_mint_by_keys(
 }
 
 /// Assert that a byte array is a valid secp256k1 public key.
+///
+/// Copied from cosmwasm-crypto:
+/// https://github.com/CosmWasm/cosmwasm/blob/v1.1.9/packages/crypto/src/secp256k1.rs#L140-L151
+///
+/// Previously I attempted to use the `k256` library for pubkey validation.
+/// But it did not work because `rand` is a non-optional dependency for `k256`.
 pub fn assert_valid_secp256k1_pubkey(bytes: &[u8]) -> Result<(), ContractError> {
-    VerifyingKey::from_sec1_bytes(bytes)
-        .map(|_| ())
-        .map_err(|_| ContractError::InvalidPubkey)
+    let ok = match bytes.first() {
+        Some(0x02) | Some(0x03) => bytes.len() == ECDSA_COMPRESSED_PUBKEY_LEN,
+        Some(0x04) => bytes.len() == ECDSA_UNCOMPRESSED_PUBKEY_LEN,
+        _ => false,
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(ContractError::InvalidPubkey)
+    }
 }

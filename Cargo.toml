@@ -20,7 +20,6 @@ cw-item-set     = "0.4"
 cw-storage-plus = "0.13"
 cw-utils        = "0.13"
 hex             = "0.4"
-k256            = "0.10"
 schemars        = "0.8"
 serde           = { version = "1.0", default-features = false }
 sg1             = "0.14"
