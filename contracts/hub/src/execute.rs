@@ -1,10 +1,11 @@
 use std::collections::BTreeSet;
 
-use badges::{Badge, FeeRate, MintRule};
 use cosmwasm_std::{to_binary, Addr, DepsMut, Empty, Env, MessageInfo, StdResult, WasmMsg};
-use sg721::MintMsg;
+use cw721_base::msg::MintMsg;
 use sg_metadata::Metadata;
 use sg_std::Response;
+
+use badges::{Badge, FeeRate, MintRule};
 
 use crate::{
     error::ContractError,
@@ -39,11 +40,6 @@ pub fn set_nft(deps: DepsMut, sender_addr: Addr, nft: &str) -> Result<Response, 
     NFT.save(deps.storage, &nft_addr)?;
 
     Ok(Response::new()
-        .add_message(WasmMsg::Execute {
-            contract_addr: nft_addr.into(),
-            msg: to_binary(&badges::nft::ExecuteMsg::_Ready {})?,
-            funds: vec![],
-        })
         .add_attribute("action", "badges/hub/set_nft")
         .add_attribute("nft", nft))
 }
@@ -195,7 +191,7 @@ pub fn purge_keys(
     // because of how Rust works
     let res = query::keys(deps.as_ref(), id, None, limit)?;
     for key in &res.keys {
-        KEYS.remove(deps.storage, (id, key));
+        KEYS.remove(deps.storage, (id, key))?;
     };
 
     Ok(Response::new()
@@ -219,7 +215,7 @@ pub fn purge_owners(
     // them because of how Rust works
     let res = query::owners(deps.as_ref(), id, None, limit)?;
     for owner in &res.owners {
-        OWNERS.remove(deps.storage, (id, owner));
+        OWNERS.remove(deps.storage, (id, owner))?;
     };
 
     Ok(Response::new()
@@ -254,7 +250,7 @@ pub fn mint_by_minter(
             let serial = start_serial + (idx as u64);
             Ok(WasmMsg::Execute {
                 contract_addr: nft_addr.to_string(),
-                msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
+                msg: to_binary(&sg721::ExecuteMsg::<_, Empty>::Mint(MintMsg::<Option<Empty>> {
                     token_id: token_id(id, serial),
                     owner,
                     token_uri: None,
@@ -294,7 +290,7 @@ pub fn mint_by_key(
     Ok(Response::new()
         .add_message(WasmMsg::Execute {
             contract_addr: nft_addr.to_string(),
-            msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
+            msg: to_binary(&sg721::ExecuteMsg::<_, Empty>::Mint(MintMsg::<Option<Empty>> {
                 token_id: token_id(id, badge.current_supply),
                 // NOTE: it's possible to avoid cloning and save a liiiittle bit of gas here, simply
                 // by moving this `add_message` after the one `add_attribute` that uses `owner`.
@@ -330,13 +326,13 @@ pub fn mint_by_keys(
     badge.current_supply += 1;
     BADGES.save(deps.storage, id, &badge)?;
 
-    KEYS.remove(deps.storage, (id, &pubkey));
+    KEYS.remove(deps.storage, (id, &pubkey))?;
     OWNERS.insert(deps.storage, (id, &owner))?;
 
     Ok(Response::new()
         .add_message(WasmMsg::Execute {
             contract_addr: nft_addr.to_string(),
-            msg: to_binary(&sg721::ExecuteMsg::Mint(MintMsg::<Option<Empty>> {
+            msg: to_binary(&sg721::ExecuteMsg::<_, Empty>::Mint(MintMsg::<Option<Empty>> {
                 token_id: token_id(id, badge.current_supply),
                 owner: owner.clone(),
                 token_uri: None,

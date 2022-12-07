@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies};
-use cosmwasm_std::{attr, Addr, Decimal, SubMsg, WasmMsg, to_binary};
+use cosmwasm_std::{attr, Addr, Decimal};
 
 use badges::FeeRate;
 
@@ -45,14 +45,7 @@ fn setting_nft() {
     // developer sets nft
     {
         let res = execute::set_nft(deps.as_mut(), Addr::unchecked("larry"), "nft").unwrap();
-        assert_eq!(
-            res.messages,
-            vec![SubMsg::new(WasmMsg::Execute {
-                contract_addr: "nft".to_string(),
-                msg: to_binary(&badges::nft::ExecuteMsg::_Ready {}).unwrap(),
-                funds: vec![]
-            })],
-        );
+        assert!(res.messages.is_empty());
         assert_eq!(
             res.attributes,
             vec![
