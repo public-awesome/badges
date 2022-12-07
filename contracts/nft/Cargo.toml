@@ -14,9 +14,7 @@ crate-type = ["cdylib", "rlib"]
 doctest    = false
 
 [features]
-default = ["v1_2"]
 library = []
-v1_2 = []
 
 [dependencies]
 badges          = { path = "../../packages/badges" }
