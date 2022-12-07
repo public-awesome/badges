@@ -32,18 +32,12 @@ sg-std          = "0.14"
 sha2            = "0.10"
 thiserror       = "1"
 
-[profile.release.package.badge-hub]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.badge-nft]
-codegen-units = 1
-incremental = false
-
 [profile.release]
-rpath = false
-lto = true
-overflow-checks = true
-opt-level = 3
-debug = false
+codegen-units    = 1
+debug            = false
 debug-assertions = false
+incremental      = false
+lto              = true
+opt-level        = 3
+overflow-checks  = true
+rpath            = false
