@@ -11,6 +11,9 @@ use badges::nft::{AllNftInfoResponse, Extension, InstantiateMsg, NftInfoResponse
 
 use crate::state::API_URL;
 
+pub const CONTRACT_NAME: &str = "crates.io:badge-hub";
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Default)]
 pub struct NftContract<'a> {
     pub parent: sg721_base::Sg721Contract<'a, Extension>,
@@ -24,6 +27,8 @@ impl<'a> NftContract<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, sg721_base::ContractError> {
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
         API_URL.save(deps.storage, &msg.api_url)?;
 
         self.parent.instantiate(

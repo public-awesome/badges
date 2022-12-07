@@ -1,17 +1,18 @@
 pub mod contract;
 pub mod state;
+pub mod upgrades;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{
-        entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult,
+        entry_point, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult,
     };
     use sg721_base::ContractError;
     use sg_std::Response;
 
-    use badges::nft::{InstantiateMsg, ExecuteMsg, QueryMsg};
+    use badges::nft::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-    use crate::contract::*;
+    use crate::{contract::*, upgrades};
 
     #[entry_point]
     pub fn instantiate(
@@ -65,5 +66,10 @@ pub mod entry {
             } => to_binary(&tract.all_nft_info(deps, env, token_id, include_expired)?),
             _ => tract.parent.query(deps, env, msg),
         }
+    }
+
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
+        upgrades::v1_2::migrate(deps)
     }
 }
