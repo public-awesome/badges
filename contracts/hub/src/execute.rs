@@ -77,6 +77,13 @@ pub fn create_badge(
         fee_rate.metadata,
     )?;
 
+    // if the badge uses "by key" mint rule, the key must be a valid secp256k1
+    // public key
+    if let MintRule::ByKey(key) = &badge.rule {
+        let bytes = hex::decode(key)?;
+        assert_valid_secp256k1_pubkey(&bytes)?;
+    }
+
     let id = BADGE_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
     BADGES.save(deps.storage, id, &badge)?;
 
@@ -154,7 +161,10 @@ pub fn add_keys(
     // save the keys
     keys.iter().try_for_each(|key| -> Result<_, ContractError> {
         // key must be a of valid hex encoding
-        hex::decode(key)?;
+        let bytes = hex::decode(key)?;
+
+        // key must be a valid secp256k1 public key
+        assert_valid_secp256k1_pubkey(&bytes)?;
 
         // the key must not already exist
         if KEYS.insert(deps.storage, (id, key))? {

@@ -25,6 +25,7 @@ cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 cw2             = { workspace = true }
 hex             = "0.4"
+k256            = "0.10"
 serde           = { workspace = true }
 sg1             = { workspace = true }
 sg721           = { workspace = true }

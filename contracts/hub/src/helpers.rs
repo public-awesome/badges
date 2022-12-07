@@ -1,6 +1,7 @@
 use std::fmt;
 
 use cosmwasm_std::{Addr, Api, BlockInfo, Deps, Storage, Coin};
+use k256::ecdsa::VerifyingKey;
 use sha2::{Digest, Sha256};
 
 use badges::{Badge, MintRule};
@@ -167,4 +168,11 @@ pub fn assert_can_mint_by_keys(
     assert_valid_signature(deps.api, pubkey, &message, signature)?;
 
     Ok(())
+}
+
+/// Assert that a byte array is a valid secp256k1 public key.
+pub fn assert_valid_secp256k1_pubkey(bytes: &[u8]) -> Result<(), ContractError> {
+    VerifyingKey::from_sec1_bytes(bytes)
+        .map(|_| ())
+        .map_err(|_| ContractError::InvalidPubkey)
 }

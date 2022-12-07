@@ -1,4 +1,4 @@
-use cosmwasm_std::testing::{mock_dependencies, mock_info, MockApi, MockQuerier, MockStorage};
+use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{attr, Addr, Decimal, DepsMut, Empty, OwnedDeps};
 use sg_metadata::Metadata;
 use sg_std::Response;
@@ -9,6 +9,13 @@ use badge_hub::{execute, query};
 use badges::{Badge, MintRule, FeeRate};
 
 mod utils;
+
+// two valid secp256k1 public keys for testing purpose
+const KEY_1: &str = "026f476708bd8fcc8a58bae717ee6922cdefd7917492dbc1a4c2f96d22ba30e470";
+const KEY_2: &str = "03858cd06aadf3e26b05bc3d5ceacae2fb1ea4027b2c63730e3de39abea255ee8c";
+
+// a valid ed25519 pubkey, but not a valid secp256k1 pubkey
+const INVALID_KEY: &str = "0000000b7373682d6564323535313900000020060892d88619ba6f56bc2ec5f1daec09529fbfc4f7a6723006f19e724c3deea5";
 
 fn setup_test() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     let mut deps = mock_dependencies();
@@ -222,7 +229,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("jake", &[]),
             1,
-            utils::btreeset(&["1234abcd"]),
+            utils::btreeset(&[KEY_1]),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::NotManager);
@@ -235,7 +242,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
             2,
-            utils::btreeset(&["1234abcd"]),
+            utils::btreeset(&[KEY_1]),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::wrong_mint_rule("by_keys", &badge.rule));
@@ -248,7 +255,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(99999),
             mock_info("larry", &[]),
             1,
-            utils::btreeset(&["1234abcd"]),
+            utils::btreeset(&[KEY_1]),
         )
         .unwrap_err();
         assert_eq!(err, ContractError::Expired);
@@ -280,7 +287,7 @@ fn adding_keys() {
             utils::mock_env_at_timestamp(10000),
             mock_info("larry", &[]),
             1,
-            utils::btreeset(&["1234abcd", "4321dcba"]),
+            utils::btreeset(&[KEY_1, KEY_2]),
         )
         .unwrap();
         assert_eq!(res.messages, vec![]);
@@ -295,6 +302,61 @@ fn adding_keys() {
         );
 
         let res = query::keys(deps.as_ref(), 1, None, None).unwrap();
-        assert_eq!(res.keys, vec!["1234abcd".to_string(), "4321dcba".to_string()]);
+        assert_eq!(res.keys, vec![KEY_1.to_string(), KEY_2.to_string()]);
+    }
+}
+
+#[test]
+fn rejecting_invalid_keys() {
+    let mut deps = setup_test();
+
+    // cannot create a new badge with invalid key
+    {
+        let err = execute::create_badge(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("larry", &[]),
+            Badge {
+                manager: Addr::unchecked("larry"),
+                metadata: Metadata::default(),
+                transferrable: false,
+                rule: MintRule::ByKey(INVALID_KEY.into()),
+                expiry: None,
+                max_supply: None,
+                current_supply: 0,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::InvalidPubkey);
+    }
+
+    // cannot add invalid keys to an existing badge
+    {
+        // first, properly create a badge with the "by keys" minting rule
+        execute::create_badge(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("larry", &[]),
+            Badge {
+                manager: Addr::unchecked("larry"),
+                metadata: Metadata::default(),
+                transferrable: false,
+                rule: MintRule::ByKeys,
+                expiry: None,
+                max_supply: None,
+                current_supply: 0,
+            },
+        )
+        .unwrap();
+
+        let err = execute::add_keys(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("larry", &[]),
+            1,
+            utils::btreeset(&[KEY_1, KEY_2, INVALID_KEY]),
+        )
+        .unwrap_err();
+        assert_eq!(err, ContractError::InvalidPubkey);
     }
 }
