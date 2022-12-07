@@ -1,8 +1,7 @@
 use cosmwasm_std::{to_binary, MessageInfo, Storage, Uint128, Decimal};
 use sg_std::Response;
 
-use crate::error::ContractError;
-use crate::state::DEVELOPER;
+use crate::{error::ContractError, state::DEVELOPER};
 
 // TODO: add docs
 pub fn handle_fee<T: serde::Serialize>(

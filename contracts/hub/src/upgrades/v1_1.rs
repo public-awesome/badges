@@ -4,7 +4,10 @@ use sg_std::Response;
 
 use badges::FeeRate;
 
-use crate::state::{BADGES, FEE_RATE};
+use crate::{
+    contract::{CONTRACT_NAME, CONTRACT_VERSION},
+    state::{BADGES, FEE_RATE},
+};
 
 const LEGACY_FEE_PER_BYTE: Item<Decimal> = Item::new("fee_per_byte");
 
@@ -27,6 +30,9 @@ pub fn migrate(deps: DepsMut) -> StdResult<Response> {
 
     // extend the minting deadline for badge 3
     update_badge_3_expiry(deps.storage)?;
+
+    // set the contract version to v1.1.0
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     Ok(Response::new()
         .add_attribute("action", "badges/hub/migrate")

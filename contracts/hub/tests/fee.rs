@@ -93,7 +93,7 @@ fn badge_creation_fee() {
     // try create without sending a fee, should fail
     {
         let err = create(0, NATIVE_DENOM).unwrap_err();
-        assert_eq!(err, FeeError::from(PaymentError::NoFunds {}).into());
+        assert_eq!(err, FeeError::InsufficientFee(fee_amount, 0).into());
     }
 
     // try create with less than sufficient amount, should fail
@@ -109,7 +109,7 @@ fn badge_creation_fee() {
         let err = create(fee_amount, "doge").unwrap_err();
         assert_eq!(
             err,
-            FeeError::from(PaymentError::MissingDenom(NATIVE_DENOM.to_string())).into()
+            FeeError::from(PaymentError::ExtraDenom("doge".into())).into()
         );
     }
 

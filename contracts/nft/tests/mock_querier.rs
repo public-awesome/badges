@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use cosmwasm_std::testing::MockQuerier;
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Addr, Empty, Querier, QuerierResult, QueryRequest,
-    SystemError, WasmQuery,
+    from_binary, from_slice, to_binary, Addr, ContractInfoResponse, Empty, Querier, QuerierResult,
+    QueryRequest, SystemError, WasmQuery,
 };
 
 use badges::{hub, Badge};
@@ -17,10 +17,12 @@ pub struct CustomQuerier {
 
 impl Default for CustomQuerier {
     fn default() -> Self {
-        CustomQuerier {
+        let mut querier = CustomQuerier {
             base: MockQuerier::new(&[]),
             hub: HubQuerier::default(),
-        }
+        };
+        querier.base.update_wasm(wasm_querier_handler);
+        querier
     }
 }
 
@@ -94,5 +96,21 @@ impl HubQuerier {
 
             _ => panic!("[mock]: unsupported hub query: {:?}", msg),
         }
+    }
+}
+
+/// sg721 requires that the deployer must be a contract:
+/// https://github.com/public-awesome/launchpad/blob/v0.21.1/contracts/sg721-base/src/contract.rs#L39-L47
+///
+/// to pass the test, we use a custom wasm query handler that returns "badge_hub"
+/// as a valid contract, and make sure to use "badge_hub" here as the sender.
+fn wasm_querier_handler(query: &WasmQuery) -> QuerierResult {
+    match query {
+        WasmQuery::ContractInfo {
+            contract_addr,
+        } if contract_addr == "badge_hub" => {
+            Ok(to_binary(&ContractInfoResponse::new(69420, "larry")).into()).into()
+        },
+        _ => panic!("[mock]: unimplemented wasm query: {query:?}"),
     }
 }

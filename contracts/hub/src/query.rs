@@ -8,9 +8,6 @@ use badges::hub::{
 
 use crate::state::*;
 
-pub const CONTRACT_NAME: &str = "crates.io:badge-hub";
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub const DEFAULT_LIMIT: u32 = 10;
 pub const MAX_LIMIT: u32 = 30;
 

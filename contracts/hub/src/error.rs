@@ -22,6 +22,9 @@ pub enum ContractError {
     #[error("invalid reply id {0}; must be 1")]
     InvalidReplyId(u64),
 
+    #[error("not a valid secp256k1 public key")]
+    InvalidPubkey,
+
     #[error("signature verification failed")]
     InvalidSignature,
 

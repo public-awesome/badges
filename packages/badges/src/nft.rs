@@ -17,7 +17,7 @@ pub struct InstantiateMsg {
 }
 
 // message types
-pub type ExecuteMsg = sg721::ExecuteMsg<Extension>;
+pub type ExecuteMsg = sg721::ExecuteMsg<Extension, Empty>;
 pub type QueryMsg = sg721_base::msg::QueryMsg;
 
 // response types

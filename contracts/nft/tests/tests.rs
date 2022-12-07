@@ -5,6 +5,7 @@ use badge_nft::entry;
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::{Addr, Empty, OwnedDeps, StdError};
 use cw721::{AllNftInfoResponse, Cw721Query};
+use cw721_base::MintMsg;
 use sg721::CollectionInfo;
 use sg_metadata::{Metadata, Trait};
 
@@ -64,11 +65,16 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
 
     let contract = NftContract::default();
 
+    // sg721 requires that the deployer must be a contract:
+    // https://github.com/public-awesome/launchpad/blob/v0.21.1/contracts/sg721-base/src/contract.rs#L39-L47
+    //
+    // to pass the test, we use a custom wasm query handler that returns "badge_hub"
+    // as a valid contract, and make sure to use "badge_hub" here as the sender.
     contract
         .instantiate(
             deps.as_mut(),
             mock_env(),
-            mock_info("larry", &[]),
+            mock_info("badge_hub", &[]),
             InstantiateMsg {
                 hub: "hub".to_string(),
                 api_url: "https://badges-api.larry.engineer/metadata".to_string(),
@@ -77,6 +83,8 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
                     description: "this is a test".to_string(),
                     image: "https://www.youtube.com/watch?v=dQw4w9WgXcQ".to_string(),
                     external_link: Some("https://larry.engineer/".to_string()),
+                    explicit_content: None,
+                    start_trading_time: None,
                     royalty_info: None,
                 },
             },
@@ -85,16 +93,11 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
 
     contract
         .parent
-        .ready(deps.as_mut(), mock_env(), mock_info("hub", &[]))
-        .unwrap();
-
-    contract
-        .parent
         .mint(
             deps.as_mut(),
             mock_env(),
             mock_info("hub", &[]),
-            sg721::MintMsg::<Extension> {
+            MintMsg::<Extension> {
                 token_id: "69|420".to_string(),
                 owner: "jake".to_string(),
                 token_uri: None,
@@ -109,7 +112,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, mock_querier::CustomQuerier, 
             deps.as_mut(),
             mock_env(),
             mock_info("hub", &[]),
-            sg721::MintMsg::<Extension> {
+            MintMsg::<Extension> {
                 token_id: "420|69".to_string(),
                 owner: "pumpkin".to_string(),
                 token_uri: None,
