@@ -1,19 +1,18 @@
 use std::collections::BTreeSet;
 
+use badges::{Badge, FeeRate, MintRule};
 use cosmwasm_std::{to_binary, Addr, DepsMut, Empty, Env, MessageInfo, StdResult, WasmMsg};
 use sg721::MintMsg;
 use sg_metadata::Metadata;
 use sg_std::Response;
-use badges::{Badge, FeeRate, MintRule};
 
-use crate::error::ContractError;
-use crate::fee::handle_fee;
-use crate::helpers::*;
-use crate::state::*;
-use crate::query;
-
-pub const DEFAULT_LIMIT: u32 = 10;
-pub const MAX_LIMIT: u32 = 30;
+use crate::{
+    error::ContractError,
+    fee::handle_fee,
+    helpers::*,
+    query,
+    state::*,
+};
 
 pub fn init(deps: DepsMut, developer: Addr, fee_rate: FeeRate) -> StdResult<Response> {
     DEVELOPER.save(deps.storage, &developer)?;

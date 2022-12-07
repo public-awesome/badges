@@ -3,11 +3,12 @@ use cosmwasm_std::{
 };
 use sg_std::Response;
 
-use badges::hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use badges::Badge;
+use badges::{
+    hub::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
+    Badge,
+};
 
-use crate::error::ContractError;
-use crate::{execute, query, upgrades};
+use crate::{error::ContractError, execute, query, upgrades};
 
 pub const CONTRACT_NAME: &str = "crates.io:badge-hub";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

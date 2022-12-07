@@ -6,8 +6,10 @@ use sha2::{Digest, Sha256};
 
 use badges::{Badge, MintRule};
 
-use crate::error::ContractError;
-use crate::state::{KEYS, OWNERS};
+use crate::{
+    error::ContractError,
+    state::{KEYS, OWNERS},
+};
 
 /// Each NFT's token id is simply the badge id and the serial separated by a pipe.
 pub fn token_id(id: u64, serial: u64) -> String {
