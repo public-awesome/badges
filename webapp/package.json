@@ -1,0 +1,54 @@
+{
+  "name": "badges-webapp",
+  "description": "Web frontend for interacting with Badges smart contracts",
+  "version": "1.0.0",
+  "author": "larry <gm@larry.engineer>",
+  "license": "GPL-3.0-or-later",
+  "keywords": [
+    "cosmos",
+    "cosmwasm",
+    "nft"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/st4k3h0us3/badges-webapp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/st4k3h0us3/badges-webapp/issues"
+  },
+  "homepage": "https://github.com/st4k3h0us3/badges-webapp#readme",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^1.8.9",
+    "@cosmjs/cosmwasm-stargate": "^0.28.13",
+    "@cosmjs/proto-signing": "^0.28.13",
+    "@cosmjs/stargate": "^0.28.13",
+    "@steak-enjoyers/badges.js": "^1.0.0",
+    "bech32": "^2.0.0",
+    "jscrypto": "^1.0.3",
+    "next": "^12.2.5",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "react-responsive-masonry": "^2.1.6",
+    "secp256k1": "^4.0.3",
+    "webrtc-adapter": "^8.1.2",
+    "zustand": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.49",
+    "@types/react-responsive-masonry": "^2.1.0",
+    "@types/secp256k1": "^4.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
+    "eslint": "^8.23.0",
+    "eslint-config-next": "^12.2.5",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-react": "^7.31.6",
+    "typescript": "^4.8.2"
+  }
+}
